@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import { startAqiCron } from "./src/cron/aqiCron.js";
 import debugAqi from "./src/api/routes/debugAqi.js";
 
 // Load env
@@ -80,9 +79,6 @@ app.use("/api/media", mediaRoutes);
 app.get("/health", (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
-
-// cron
-startAqiCron();
 
 // ------------------------------
 // START SERVER
