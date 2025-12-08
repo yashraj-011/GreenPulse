@@ -244,7 +244,7 @@ export default function Dashboard() {
                 key={s.id}
                 onClick={() => setSelected(s)}
                 className={`flex items-center justify-between px-3 py-2 rounded-xl border text-left ${
-                  selected?.id === s.id ? "bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700" : "bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600"
+                  selected?.id === s.id ? "bg-primary-50 dark:bg-primary-900 dark:bg-opacity-30 border-primary-200 dark:border-primary-700" : "bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600"
                 }`}
               >
                 <div>
