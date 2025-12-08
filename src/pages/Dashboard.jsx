@@ -154,7 +154,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="h-56">
-                  <ForecastChart data={forecast} />
+                  <ForecastChart data={forecast} range={range} />
                 </div>
               )}
             </div>
