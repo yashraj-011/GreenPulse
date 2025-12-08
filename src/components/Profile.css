@@ -1,0 +1,42 @@
+.profile-page {
+  max-width: 700px;
+  margin: 1rem auto;
+  padding: 1rem;
+}
+
+.card {
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.profile-view p {
+  margin: .5rem 0;
+}
+
+.profile-actions {
+  display: flex;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+
+.profile-form label {
+  display: block;
+  margin: .5rem 0;
+}
+
+.profile-form input,
+.profile-form textarea {
+  width: 100%;
+  padding: .5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+button.danger {
+  background: #ff4d4f;
+  color: #fff;
+  border: none;
+  padding: .5rem .75rem;
+}
