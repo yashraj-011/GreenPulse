@@ -4,7 +4,7 @@ import { aqiService } from "../services/aqiService";
 import AQICard from "../components/AQICard";
 import ForecastChart from "../components/ForecastChart";
 import SourceDistribution from "../components/SourceDistribution";
-import IndiaAQIMap from "../components/IndiaAQIMap";
+import DelhiAQIMap from "../components/DelhiAQIMap";
 
 const DEFAULT_RANGE = "72";
 
@@ -223,11 +223,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* India AQI Map */}
+        {/* Delhi-NCR AQI Map */}
         <div className="mt-6">
-          <IndiaAQIMap
-            selectedCity={selected}
-            onCitySelect={handleCitySelect}
+          <DelhiAQIMap
+            selectedStation={selected}
+            onStationSelect={handleCitySelect}
           />
         </div>
       </div>
