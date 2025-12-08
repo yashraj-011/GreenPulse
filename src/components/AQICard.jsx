@@ -68,36 +68,35 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
 
         {/* Details + Search */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs text-slate-500 dark:text-slate-300">Current AQI</p>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 leading-tight">{station?.name || "—"}</h3>
-              <p className="text-[12px] text-slate-500 dark:text-slate-300 mt-1">{station?.category || ""}</p>
-            </div>
+          {/* Station Info */}
+          <div className="mb-4">
+            <p className="text-xs text-slate-500 dark:text-slate-300">Current AQI</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 leading-tight">{station?.name || "—"}</h3>
+            <p className="text-[12px] text-slate-500 dark:text-slate-300 mt-1">{station?.category || ""}</p>
+          </div>
 
-            {/* Search input (small) */}
-            <div style={{ minWidth: 220 }} className="flex items-center gap-2">
-              <form onSubmit={handleSearch} className="flex items-center gap-2">
-                <input
-                  list={suggestions && suggestions.length ? "delhi-suggestions" : undefined}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search location (Delhi)"
-                  className="input px-3 py-2 w-52"
-                  aria-label="Search location"
-                />
-                <button type="submit" className="btn-primary px-3 py-2">
-                  Find
-                </button>
-                {suggestions && suggestions.length ? (
-                  <datalist id="delhi-suggestions">
-                    {suggestions.map((s) => (
-                      <option key={s} value={s} />
-                    ))}
-                  </datalist>
-                ) : null}
-              </form>
-            </div>
+          {/* Search input - repositioned with proper spacing */}
+          <div className="mb-4">
+            <form onSubmit={handleSearch} className="flex items-center gap-3 max-w-md">
+              <input
+                list={suggestions && suggestions.length ? "delhi-suggestions" : undefined}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search location (Delhi)"
+                className="input px-3 py-2 flex-1 min-w-0"
+                aria-label="Search location"
+              />
+              <button type="submit" className="btn-primary px-4 py-2 flex-shrink-0">
+                Find
+              </button>
+              {suggestions && suggestions.length ? (
+                <datalist id="delhi-suggestions">
+                  {suggestions.map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+              ) : null}
+            </form>
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
