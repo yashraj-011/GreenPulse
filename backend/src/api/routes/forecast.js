@@ -8,10 +8,6 @@ import axios from "axios";
 import { buildFeatureVector } from "../../services/featureBuilder.js";
 import { stations39 } from "../../db/stations39.js";
 
-import { saveAqiData } from "../../db/saveAqiData.js";
-import { saveRealtime } from "../../db/saveRealtime.js";
-import { saveForecast } from "../../db/saveForecast.js";
-
 // ⭐ Correct paths — your utils folder = src/utils/
 import { buildHealthAdvice } from "../../utils/healthEngine.js";
 import { buildSourceBreakdown } from "../../utils/sourceEngine.js";
@@ -34,8 +30,9 @@ router.get("/realtime", async (req, res) => {
   try {
     const { modelInput, rt, finalStation } = await buildFeatureVector();
 
-    await saveRealtime(rt);
-    await saveAqiData("Delhi", finalStation, rt.aqi, rt.category);
+    // Removed database calls - not using DB
+    // await saveRealtime(rt);
+    // await saveAqiData("Delhi", finalStation, rt.aqi, rt.category);
 
     return res.json({
       success: true,
@@ -85,8 +82,9 @@ router.post("/station", async (req, res) => {
     // Build realtime features
     const { modelInput, rt } = await buildFeatureVector(finalStation);
 
-    await saveRealtime(rt);
-    await saveAqiData("Delhi", finalStation, rt.aqi, rt.category);
+    // Removed database calls - not using DB
+    // await saveRealtime(rt);
+    // await saveAqiData("Delhi", finalStation, rt.aqi, rt.category);
 
     // ----- ML MODEL CALL (unchanged) -----
     const fastRes = await axios.post(
@@ -97,7 +95,8 @@ router.post("/station", async (req, res) => {
       }
     );
 
-    await saveForecast(finalStation, fastRes.data.forecast);
+    // Removed database call - not using DB
+    // await saveForecast(finalStation, fastRes.data.forecast);
 
     // ----- HEALTH & SOURCE BREAKDOWN -----
     const health = buildHealthAdvice(rt.aqi);
