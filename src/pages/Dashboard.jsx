@@ -166,12 +166,7 @@ export default function Dashboard() {
 
             <div style={{ minHeight: 240 }}>
               <div className="h-56">
-                <ForecastChart data={forecast.filter((_, index) => {
-                  // Filter based on selected range: 24h (0-3), 48h (0-4), 72h (0-5)
-                  if (range === "24") return index <= 3; // Now, +6h, +12h, +24h
-                  if (range === "48") return index <= 4; // Now, +6h, +12h, +24h, +48h
-                  return true; // 72h shows all data points
-                })} />
+                <ForecastChart data={forecast} />
               </div>
             </div>
           </div>
