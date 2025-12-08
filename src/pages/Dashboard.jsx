@@ -4,6 +4,7 @@ import { aqiService } from "../services/aqiService";
 import AQICard from "../components/AQICard";
 import ForecastChart from "../components/ForecastChart";
 import SourceDistribution from "../components/SourceDistribution";
+import AQIHeatmap from "../components/AQIHeatmap";
 
 const DEFAULT_RANGE = "72";
 
@@ -102,6 +103,32 @@ export default function Dashboard() {
     }
   };
 
+  // Handler for city selection from heatmap
+  const handleCitySelect = (city) => {
+    console.log("🗺️ Heatmap city selected:", city.name);
+    // Try to find matching station or create a virtual one
+    const matchingStation = stations.find(s =>
+      s.name.toLowerCase().includes(city.name.toLowerCase()) ||
+      city.name.toLowerCase().includes(s.name.toLowerCase())
+    );
+
+    if (matchingStation) {
+      setSelected(matchingStation);
+    } else {
+      // Create virtual station for heatmap city
+      const virtualStation = {
+        id: `city_${city.name}`,
+        name: city.name,
+        aqi: city.aqi,
+        category: city.category,
+        lat: city.lat,
+        lng: city.lng,
+        isVirtual: true
+      };
+      setSelected(virtualStation);
+    }
+  };
+
   const getAQIBadgeClass = (aqi) => {
     if (aqi <= 50) return "bg-green-100 text-green-700";
     if (aqi <= 100) return "bg-yellow-100 text-yellow-700";
@@ -194,6 +221,14 @@ export default function Dashboard() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* AQI Heatmap for India */}
+        <div className="mt-6">
+          <AQIHeatmap
+            selectedCity={selected}
+            onCitySelect={handleCitySelect}
+          />
         </div>
       </div>
     </div>
