@@ -175,9 +175,6 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Dashboard</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-300 mb-6">Live station-wise AQI and 24–72 hour forecasts for Delhi-NCR.</p>
-
         {/* Top center AQI card */}
         <div className="flex justify-center">
           <div className="w-full lg:w-3/5">
