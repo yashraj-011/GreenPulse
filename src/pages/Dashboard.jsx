@@ -7,26 +7,6 @@ import SourceDistribution from "../components/SourceDistribution";
 
 const DEFAULT_RANGE = "72";
 
-// small list of Delhi localities for datalist autosuggest fallback
-const DELHI_SUGGESTIONS = [
-  "Connaught Place",
-  "Rajiv Chowk",
-  "Noida Sector 62",
-  "Lajpat Nagar",
-  "Janpath",
-  "Karol Bagh",
-  "Vasant Vihar",
-  "Pitampura",
-  "Hauz Khas",
-  "Anand Vihar",
-  "Dwarka",
-  "Saket",
-  "Shahdara",
-  "Mayur Vihar",
-  "Indirapuram",
-  "Nehru Place"
-];
-
 export default function Dashboard() {
   const [stations, setStations] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -34,6 +14,7 @@ export default function Dashboard() {
   const [range, setRange] = useState(DEFAULT_RANGE);
   const [sourcesData, setSourcesData] = useState(null);
   const [loadingStations, setLoadingStations] = useState(false);
+  const [stationSuggestions, setStationSuggestions] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -41,6 +22,11 @@ export default function Dashboard() {
       try {
         const data = (await aqiService.getStations()) || [];
         setStations(data);
+
+        // Extract station names for search suggestions
+        const suggestions = data.map(station => station.name).slice(0, 16); // Show top 16 for better UX
+        setStationSuggestions(suggestions);
+
         if (data && data.length) setSelected(data[0]);
       } catch (e) {
         console.warn("Failed to load stations", e);
@@ -126,7 +112,7 @@ export default function Dashboard() {
               station={selected}
               loading={loadingStations}
               onSearch={handleLocationSearch}
-              suggestions={DELHI_SUGGESTIONS}
+              suggestions={stationSuggestions}
             />
           </div>
         </div>
