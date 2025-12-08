@@ -223,7 +223,7 @@ export default function Dashboard() {
           <div>
             {loadingSources ? (
               <div className="card p-6">
-                <h3 className="text-sm font-semibold mb-2 dark:text-slate-50">Pollution Sources (Real-time)</h3>
+                <h3 className="text-sm font-semibold mb-2 dark:text-slate-50">Pollution Sources (Estimated)</h3>
                 <div className="flex items-center justify-center" style={{ height: 180 }}>
                   <div className="text-slate-500 dark:text-slate-300 text-sm">Loading sources data...</div>
                 </div>

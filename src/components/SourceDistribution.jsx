@@ -58,7 +58,7 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
   if (!data || !data.length) {
     return (
       <div className="card p-4">
-        <h3 className="text-sm font-semibold mb-2 dark:text-slate-50">Pollution Sources (Real-time)</h3>
+        <h3 className="text-sm font-semibold mb-2 dark:text-slate-50">Pollution Sources (Estimated)</h3>
         {selectedStation && (
           <p className="text-xs text-slate-500 dark:text-slate-300 mb-3">
             For: {selectedStation.name}
@@ -137,7 +137,7 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
         {/* Right: legend / details */}
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold mb-2 dark:text-slate-50">
-            Pollution Sources (Real-time)
+            Pollution Sources (Estimated)
             {selectedStation && (
               <span className="block text-xs font-normal text-slate-500 dark:text-slate-300 mt-1">
                 For: {selectedStation.name}
@@ -171,7 +171,10 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
           </div>
 
           <p className="text-xs text-slate-400 dark:text-slate-400 mt-3">
-            Sources breakdown shown on the left. Connect to real API for live data.
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+              Demo data - Connect to real API for live sources breakdown
+            </span>
           </p>
         </div>
       </div>
