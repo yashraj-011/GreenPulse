@@ -9,7 +9,9 @@ export default {
       50: '#E6FFF4',   // mint tint
       100: '#C6F7E2',
       500: '#16A34A',  // green button
-      600: '#15803D'
+      600: '#15803D',
+      700: '#166534',  // darker green for hover states
+      900: '#052e16'   // very dark green for dark mode
     },
     skysoft: {
       50: '#ECFEFF',

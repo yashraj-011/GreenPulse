@@ -93,7 +93,7 @@ function App() {
           element={
             <ProtectedRoute>
               <AppLayout>
-                <Profile />
+                <Profile user={user} onLogout={handleLogout} />
               </AppLayout>
             </ProtectedRoute>
           }
