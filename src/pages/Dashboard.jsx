@@ -228,6 +228,7 @@ export default function Dashboard() {
           <DelhiAQIMap
             selectedStation={selected}
             onStationSelect={handleCitySelect}
+            stationsData={stations}
           />
         </div>
       </div>

@@ -66,51 +66,48 @@ const MapController = ({ stationsData }) => {
   return null;
 };
 
-const DelhiAQIMap = ({ onStationSelect, selectedStation }) => {
+const DelhiAQIMap = ({ onStationSelect, selectedStation, stationsData: externalStationsData }) => {
   const [stationsData, setStationsData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Delhi-NCR monitoring stations with exact coordinates and realistic AQI data
-  const delhiStationsData = [
-    { id: 'anand-vihar', name: 'Anand Vihar', lat: 28.6469, lng: 77.3152, aqi: 328, area: 'East Delhi' },
-    { id: 'punjabi-bagh', name: 'Punjabi Bagh', lat: 28.6742, lng: 77.1311, aqi: 267, area: 'West Delhi' },
-    { id: 'rohini', name: 'Rohini', lat: 28.7323, lng: 77.1067, aqi: 289, area: 'North West Delhi' },
-    { id: 'dwarka', name: 'Dwarka Sector 8', lat: 28.5921, lng: 77.0460, aqi: 245, area: 'South West Delhi' },
-    { id: 'ito', name: 'ITO', lat: 28.6289, lng: 77.2496, aqi: 312, area: 'Central Delhi' },
-    { id: 'mandir-marg', name: 'Mandir Marg', lat: 28.6358, lng: 77.2011, aqi: 298, area: 'Central Delhi' },
-    { id: 'rk-puram', name: 'R K Puram', lat: 28.5641, lng: 77.1715, aqi: 234, area: 'South Delhi' },
-    { id: 'sirifort', name: 'Sirifort', lat: 28.5493, lng: 77.2167, aqi: 243, area: 'South Delhi' },
-    { id: 'nehru-nagar', name: 'Nehru Nagar', lat: 28.5673, lng: 77.2524, aqi: 278, area: 'South Delhi' },
-    { id: 'shadipur', name: 'Shadipur', lat: 28.6517, lng: 77.1578, aqi: 291, area: 'West Delhi' },
-    { id: 'vivek-vihar', name: 'Vivek Vihar', lat: 28.6725, lng: 77.3147, aqi: 301, area: 'East Delhi' },
-    { id: 'wazirpur', name: 'Wazirpur', lat: 28.6998, lng: 77.1685, aqi: 284, area: 'North Delhi' },
-    { id: 'jahangirpuri', name: 'Jahangirpuri', lat: 28.7330, lng: 77.1645, aqi: 295, area: 'North West Delhi' },
-    { id: 'bawana', name: 'Bawana', lat: 28.7921, lng: 77.0455, aqi: 318, area: 'North West Delhi' },
-    { id: 'mundka', name: 'Mundka', lat: 28.6836, lng: 77.0210, aqi: 305, area: 'West Delhi' },
-    { id: 'najafgarh', name: 'Najafgarh', lat: 28.6089, lng: 76.9794, aqi: 275, area: 'South West Delhi' },
-    { id: 'okhla', name: 'Okhla Phase 2', lat: 28.5305, lng: 77.2717, aqi: 258, area: 'South East Delhi' },
-    { id: 'patparganj', name: 'Patparganj', lat: 28.6190, lng: 77.2884, aqi: 287, area: 'East Delhi' },
-    { id: 'sonia-vihar', name: 'Sonia Vihar', lat: 28.7214, lng: 77.2067, aqi: 276, area: 'North Delhi' },
-    { id: 'alipur', name: 'Alipur', lat: 28.8021, lng: 77.1450, aqi: 308, area: 'North Delhi' },
-    { id: 'ashok-vihar', name: 'Ashok Vihar', lat: 28.6946, lng: 77.1778, aqi: 282, area: 'North Delhi' },
-    { id: 'burari', name: 'Burari Crossing', lat: 28.7306, lng: 77.2058, aqi: 294, area: 'North Delhi' },
-    { id: 'crri', name: 'CRRI Mathura Road', lat: 28.5513, lng: 77.2737, aqi: 269, area: 'South Delhi' },
-    { id: 'dtu', name: 'DTU', lat: 28.7469, lng: 77.1178, aqi: 286, area: 'North West Delhi' },
-    { id: 'igi-airport', name: 'IGI Airport (T3)', lat: 28.5562, lng: 77.1000, aqi: 223, area: 'South West Delhi' },
-    { id: 'lodhi-road', name: 'Lodhi Road', lat: 28.5918, lng: 77.2273, aqi: 251, area: 'Central Delhi' },
-    { id: 'major-dhyan', name: 'Major Dhyan Chand Stadium', lat: 28.6115, lng: 77.2370, aqi: 262, area: 'Central Delhi' },
-    { id: 'nsit-dwarka', name: 'NSIT Dwarka', lat: 28.6090, lng: 77.0322, aqi: 238, area: 'South West Delhi' },
-    { id: 'pusa', name: 'Pusa', lat: 28.6418, lng: 77.1463, aqi: 274, area: 'Central Delhi' },
+  // Delhi-NCR station coordinates mapping (keep coordinates but get AQI from props)
+  const delhiStationCoordinates = {
+    'Anand Vihar': { lat: 28.6469, lng: 77.3152, area: 'East Delhi' },
+    'Punjabi Bagh': { lat: 28.6742, lng: 77.1311, area: 'West Delhi' },
+    'Rohini': { lat: 28.7323, lng: 77.1067, area: 'North West Delhi' },
+    'Dwarka Sector 8': { lat: 28.5921, lng: 77.0460, area: 'South West Delhi' },
+    'ITO': { lat: 28.6289, lng: 77.2496, area: 'Central Delhi' },
+    'Mandir Marg': { lat: 28.6358, lng: 77.2011, area: 'Central Delhi' },
+    'R K Puram': { lat: 28.5641, lng: 77.1715, area: 'South Delhi' },
+    'Sirifort': { lat: 28.5493, lng: 77.2167, area: 'South Delhi' },
+    'Nehru Nagar': { lat: 28.5673, lng: 77.2524, area: 'South Delhi' },
+    'Shadipur': { lat: 28.6517, lng: 77.1578, area: 'West Delhi' },
+    'Vivek Vihar': { lat: 28.6725, lng: 77.3147, area: 'East Delhi' },
+    'Wazirpur': { lat: 28.6998, lng: 77.1685, area: 'North Delhi' },
+    'Jahangirpuri': { lat: 28.7330, lng: 77.1645, area: 'North West Delhi' },
+    'Bawana': { lat: 28.7921, lng: 77.0455, area: 'North West Delhi' },
+    'Mundka': { lat: 28.6836, lng: 77.0210, area: 'West Delhi' },
+    'Najafgarh': { lat: 28.6089, lng: 76.9794, area: 'South West Delhi' },
+    'Okhla Phase-2': { lat: 28.5305, lng: 77.2717, area: 'South East Delhi' },
+    'Patparganj': { lat: 28.6190, lng: 77.2884, area: 'East Delhi' },
+    'Sonia Vihar': { lat: 28.7214, lng: 77.2067, area: 'North Delhi' },
+    'Alipur': { lat: 28.8021, lng: 77.1450, area: 'North Delhi' },
+    'Ashok Vihar': { lat: 28.6946, lng: 77.1778, area: 'North Delhi' },
+    'Burari Crossing': { lat: 28.7306, lng: 77.2058, area: 'North Delhi' },
+    'CRRI Mathura Road': { lat: 28.5513, lng: 77.2737, area: 'South Delhi' },
+    'DTU': { lat: 28.7469, lng: 77.1178, area: 'North West Delhi' },
+    'IGI Airport (T3)': { lat: 28.5562, lng: 77.1000, area: 'South West Delhi' },
+    'Lodhi Road': { lat: 28.5918, lng: 77.2273, area: 'Central Delhi' },
+    'Major Dhyan Chand National Stadium': { lat: 28.6115, lng: 77.2370, area: 'Central Delhi' },
+    'NSIT Dwarka': { lat: 28.6090, lng: 77.0322, area: 'South West Delhi' },
+    'Pusa': { lat: 28.6418, lng: 77.1463, area: 'Central Delhi' },
 
-    // NCR Extensions (Gurgaon, Noida, Faridabad, Ghaziabad)
-    { id: 'gurgaon-city', name: 'Gurgaon City Park', lat: 28.4595, lng: 77.0266, aqi: 198, area: 'Gurgaon' },
-    { id: 'gurgaon-iffco', name: 'IFFCO Chowk', lat: 28.4214, lng: 77.0482, aqi: 213, area: 'Gurgaon' },
-    { id: 'noida-sector-1', name: 'Noida Sector 1', lat: 28.5921, lng: 77.3461, aqi: 245, area: 'Noida' },
-    { id: 'noida-sector-62', name: 'Noida Sector 62', lat: 28.6289, lng: 77.3648, aqi: 231, area: 'Noida' },
-    { id: 'faridabad', name: 'Faridabad Sector 16A', lat: 28.4089, lng: 77.3178, aqi: 267, area: 'Faridabad' },
-    { id: 'ghaziabad', name: 'Ghaziabad Sanjay Nagar', lat: 28.6692, lng: 77.4538, aqi: 298, area: 'Ghaziabad' },
-    { id: 'greater-noida', name: 'Greater Noida Knowledge Park', lat: 28.4744, lng: 77.5040, aqi: 189, area: 'Greater Noida' }
-  ];
+    // Add some default coordinates for stations that might not be in the backend
+    'IHBAS Dilshad Garden': { lat: 28.6868, lng: 77.3185, area: 'East Delhi' },
+    'Aya Nagar': { lat: 28.4707, lng: 77.1502, area: 'South Delhi' },
+    'North Campus DU': { lat: 28.6875, lng: 77.2085, area: 'North Delhi' },
+    'Dr. Karni Singh Shooting Range': { lat: 28.4995, lng: 77.2736, area: 'South Delhi' },
+  };
 
   // AQI category helper
   const getAQICategory = (aqi) => {
@@ -123,19 +120,36 @@ const DelhiAQIMap = ({ onStationSelect, selectedStation }) => {
   };
 
   useEffect(() => {
-    setLoading(true);
-    // Simulate API loading with some random variation
-    setTimeout(() => {
-      const enrichedData = delhiStationsData.map(station => ({
-        ...station,
-        ...getAQICategory(station.aqi),
-        // Add small random variation to make it feel more real-time
-        aqi: station.aqi + Math.floor(Math.random() * 21 - 10) // ±10 variation
-      }));
-      setStationsData(enrichedData);
+    if (externalStationsData && externalStationsData.length > 0) {
+      setLoading(true);
+
+      // Use real data from the backend/aqiService
+      const mappedStations = externalStationsData
+        .map(station => {
+          const coordinates = delhiStationCoordinates[station.name];
+          if (coordinates) {
+            return {
+              id: station.id,
+              name: station.name,
+              lat: coordinates.lat,
+              lng: coordinates.lng,
+              aqi: station.aqi,
+              area: coordinates.area,
+              ...getAQICategory(station.aqi)
+            };
+          }
+          return null;
+        })
+        .filter(Boolean); // Remove null values
+
+      setStationsData(mappedStations);
       setLoading(false);
-    }, 800);
-  }, []);
+    } else {
+      // Fallback: use static data if no external data provided
+      setLoading(false);
+      console.warn('No external stations data provided to DelhiAQIMap');
+    }
+  }, [externalStationsData]);
 
   const handleStationClick = (station) => {
     if (onStationSelect) {
