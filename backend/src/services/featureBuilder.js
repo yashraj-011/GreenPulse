@@ -136,7 +136,15 @@ export async function buildFeatureVector(stationName = null) {
     wind: 2,
   };
   const fires = extract(results[3]) || { fire_count: 0 };
-  const featureNames = extract(results[4]) || [];
+
+  // Fallback feature list when FastAPI is not available
+  const FALLBACK_FEATURES = [
+    "aqi", "pm25", "pm10", "no2", "o3", "so2", "co", "nh3",
+    "temp", "humidity", "wind_speed", "fire_count", "station_code"
+  ];
+
+  const featureNames = extract(results[4]) || FALLBACK_FEATURES;
+  console.log(`📋 Using ${featureNames.length} features:`, featureNames.length > 10 ? 'Full feature set' : featureNames);
 
   // -------------------------------------------
   // AQICN DATA → Detailed fallback to basic
