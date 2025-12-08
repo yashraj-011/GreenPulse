@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [range, setRange] = useState(DEFAULT_RANGE);
   const [sourcesData, setSourcesData] = useState(null);
   const [loadingStations, setLoadingStations] = useState(false);
+  const [loadingForecast, setLoadingForecast] = useState(false);
+  const [loadingSources, setLoadingSources] = useState(false);
   const [stationSuggestions, setStationSuggestions] = useState([]);
 
   useEffect(() => {
@@ -38,18 +40,24 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!selected) return;
+
+    // Fetch forecast data
     (async () => {
+      setLoadingForecast(true);
       try {
         const data = (await aqiService.getForecast(selected.id)) || [];
         setForecast(data);
       } catch (e) {
         console.warn("Failed to fetch forecast", e);
         setForecast([]);
+      } finally {
+        setLoadingForecast(false);
       }
     })();
 
     // Fetch sources for the selected station
     (async () => {
+      setLoadingSources(true);
       try {
         if (aqiService && typeof aqiService.getSources === "function") {
           const s = await aqiService.getSources(selected.name);
@@ -58,6 +66,8 @@ export default function Dashboard() {
       } catch (e) {
         console.warn("Failed to fetch sources for station", e);
         // Keep existing sources data as fallback
+      } finally {
+        setLoadingSources(false);
       }
     })();
   }, [selected]);
@@ -138,14 +148,29 @@ export default function Dashboard() {
             </div>
 
             <div style={{ minHeight: 240 }}>
-              <div className="h-56">
-                <ForecastChart data={forecast} />
-              </div>
+              {loadingForecast ? (
+                <div className="flex items-center justify-center h-56">
+                  <div className="text-slate-500 text-sm">Loading forecast data...</div>
+                </div>
+              ) : (
+                <div className="h-56">
+                  <ForecastChart data={forecast} />
+                </div>
+              )}
             </div>
           </div>
 
           <div>
-            <SourceDistribution data={sourcesData} />
+            {loadingSources ? (
+              <div className="card p-6">
+                <h3 className="text-sm font-semibold mb-2">Pollution Sources (Real-time)</h3>
+                <div className="flex items-center justify-center" style={{ height: 180 }}>
+                  <div className="text-slate-500 text-sm">Loading sources data...</div>
+                </div>
+              </div>
+            ) : (
+              <SourceDistribution data={sourcesData} />
+            )}
           </div>
         </div>
 

@@ -100,14 +100,10 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm">
-              <div className="text-xs text-slate-500">Primary</div>
-              <div className="font-semibold text-slate-800 mt-1">Very Poor</div>
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm">
-              <div className="text-xs text-slate-500">PM10</div>
-              <div className="font-semibold text-slate-800 mt-1">—</div>
+              <div className="text-xs text-slate-500">Category</div>
+              <div className="font-semibold text-slate-800 mt-1">{station?.category || "—"}</div>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm">
               <div className="text-xs text-slate-500">Last updated</div>
