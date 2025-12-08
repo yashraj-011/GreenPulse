@@ -90,17 +90,26 @@ export default function Dashboard() {
       }
     })();
 
-    // Fetch sources for the selected station
+    // Fetch sources for the selected station - enhanced with better feedback
     (async () => {
       setLoadingSources(true);
+      setSourcesData(null); // Clear previous data while loading
       try {
+        console.log(`🔍 Fetching pollution sources for: ${selected.name}`);
         if (aqiService && typeof aqiService.getSources === "function") {
-          const s = await aqiService.getSources(selected.name);
-          if (Array.isArray(s) && s.length) setSourcesData(s);
+          const sources = await aqiService.getSources(selected.name);
+          console.log(`✅ Sources loaded for ${selected.name}:`, sources);
+          if (Array.isArray(sources) && sources.length) {
+            setSourcesData(sources);
+          } else {
+            console.warn(`❌ No sources data returned for ${selected.name}`);
+            setSourcesData([]);
+          }
         }
       } catch (e) {
-        console.warn("Failed to fetch sources for station", e);
-        // Keep existing sources data as fallback
+        console.warn(`❌ Failed to fetch sources for station ${selected.name}:`, e);
+        // Set empty array to show "No data" state instead of keeping old data
+        setSourcesData([]);
       } finally {
         setLoadingSources(false);
       }
@@ -163,13 +172,6 @@ export default function Dashboard() {
     }
   };
 
-  const getAQIBadgeClass = (aqi) => {
-    if (aqi <= 50) return "bg-green-100 text-green-700";
-    if (aqi <= 100) return "bg-yellow-100 text-yellow-700";
-    if (aqi <= 200) return "bg-orange-100 text-orange-700";
-    return "bg-red-100 text-red-700";
-  };
-
   return (
     <div className="space-y-6 px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -230,7 +232,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <SourceDistribution data={sourcesData} />
+              <SourceDistribution data={sourcesData} selectedStation={selected} />
             )}
           </div>
         </div>

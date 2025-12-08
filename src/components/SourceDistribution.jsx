@@ -12,7 +12,7 @@ import { aqiService } from "../services/aqiService";
 
 const COLORS = ["#EF4444", "#F59E0B", "#6366F1", "#10B981", "#94A3B8"]; // red, amber, indigo, green, gray
 
-export default function SourceDistribution({ data: propData }) {
+export default function SourceDistribution({ data: propData, selectedStation }) {
   const [data, setData] = useState(propData || []);
 
   useEffect(() => {
@@ -26,7 +26,9 @@ export default function SourceDistribution({ data: propData }) {
     (async () => {
       try {
         if (aqiService && typeof aqiService.getSources === "function") {
-          const resp = await aqiService.getSources();
+          // Use selected station name if available, otherwise fallback
+          const stationName = selectedStation?.name || "Delhi Central";
+          const resp = await aqiService.getSources(stationName);
           if (!mounted) return;
           if (Array.isArray(resp) && resp.length) {
             setData(resp);
@@ -51,13 +53,18 @@ export default function SourceDistribution({ data: propData }) {
     return () => {
       mounted = false;
     };
-  }, [propData]);
+  }, [propData, selectedStation]);
 
   if (!data || !data.length) {
     return (
       <div className="card p-4">
-        <h3 className="text-sm font-semibold mb-2">Pollution Sources (Real-time)</h3>
-        <div className="text-sm text-slate-500">No data available</div>
+        <h3 className="text-sm font-semibold mb-2 dark:text-slate-50">Pollution Sources (Real-time)</h3>
+        {selectedStation && (
+          <p className="text-xs text-slate-500 dark:text-slate-300 mb-3">
+            For: {selectedStation.name}
+          </p>
+        )}
+        <div className="text-sm text-slate-500 dark:text-slate-300">No sources data available for this station</div>
       </div>
     );
   }
@@ -116,10 +123,10 @@ export default function SourceDistribution({ data: propData }) {
                   textAlign: "center"
                 }}
               >
-                <div style={{ fontSize: 18, fontWeight: 700, color: "#0f172a" }}>
+                <div className="text-lg font-bold text-slate-900 dark:text-slate-50">
                   {top.value}%
                 </div>
-                <div style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>
+                <div className="text-xs text-slate-500 dark:text-slate-300 mt-1">
                   {top.name}
                 </div>
               </div>
@@ -129,7 +136,14 @@ export default function SourceDistribution({ data: propData }) {
 
         {/* Right: legend / details */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold mb-2">Pollution Sources (Real-time)</h3>
+          <h3 className="text-sm font-semibold mb-2 dark:text-slate-50">
+            Pollution Sources (Real-time)
+            {selectedStation && (
+              <span className="block text-xs font-normal text-slate-500 dark:text-slate-300 mt-1">
+                For: {selectedStation.name}
+              </span>
+            )}
+          </h3>
 
           <div className="grid grid-cols-1 gap-2 text-sm">
             {data.map((d, i) => (
@@ -146,17 +160,17 @@ export default function SourceDistribution({ data: propData }) {
                     }}
                   />
                   <div>
-                    <div className="text-sm font-medium text-slate-800">{d.name}</div>
-                    <div className="text-xs text-slate-400">Share</div>
+                    <div className="text-sm font-medium text-slate-800 dark:text-slate-50">{d.name}</div>
+                    <div className="text-xs text-slate-400 dark:text-slate-400">Share</div>
                   </div>
                 </div>
 
-                <div className="text-sm font-semibold text-slate-700">{d.value}%</div>
+                <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">{d.value}%</div>
               </div>
             ))}
           </div>
 
-          <p className="text-xs text-slate-400 mt-3">
+          <p className="text-xs text-slate-400 dark:text-slate-400 mt-3">
             Sources breakdown shown on the left. Connect to real API for live data.
           </p>
         </div>

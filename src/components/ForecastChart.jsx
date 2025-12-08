@@ -37,13 +37,46 @@ const ForecastChart = ({ data = [], range = "72" }) => {
 
   const chartData = getFilteredData();
 
+  // Check if we're in dark mode by looking at the document's classList
+  const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+
+  // Dynamic colors based on theme
+  const chartColors = {
+    stroke: isDarkMode ? "#60A5FA" : "#2563EB", // blue-400 in dark, blue-600 in light
+    fill: isDarkMode ? "#1E40AF" : "#BFDBFE", // blue-700 in dark, blue-200 in light
+    text: isDarkMode ? "#E2E8F0" : "#374151", // slate-200 in dark, gray-700 in light
+    grid: isDarkMode ? "#475569" : "#E5E7EB" // slate-600 in dark, gray-200 in light
+  };
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={chartData}>
-        <XAxis dataKey="hour" tick={{ fontSize: 11 }} />
-        <YAxis tick={{ fontSize: 11 }} />
-        <Tooltip />
-        <Area type="monotone" dataKey="aqi" stroke="#2563EB" fill="#BFDBFE" strokeWidth={2} />
+        <XAxis
+          dataKey="hour"
+          tick={{ fontSize: 11, fill: chartColors.text }}
+          axisLine={{ stroke: chartColors.grid }}
+          tickLine={{ stroke: chartColors.grid }}
+        />
+        <YAxis
+          tick={{ fontSize: 11, fill: chartColors.text }}
+          axisLine={{ stroke: chartColors.grid }}
+          tickLine={{ stroke: chartColors.grid }}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+            border: `1px solid ${isDarkMode ? '#374151' : '#E5E7EB'}`,
+            borderRadius: '8px',
+            color: chartColors.text
+          }}
+        />
+        <Area
+          type="monotone"
+          dataKey="aqi"
+          stroke={chartColors.stroke}
+          fill={chartColors.fill}
+          strokeWidth={2}
+        />
       </AreaChart>
     </ResponsiveContainer>
   );
