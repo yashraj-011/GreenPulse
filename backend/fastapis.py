@@ -10,9 +10,13 @@ import numpy as np
 # ------------------------------------------------------
 # PATHS (adjust only if your folder moves)
 # ------------------------------------------------------
-BASE_DIR = r"D:\APP\backend"
-MODEL_PATH = rf"{BASE_DIR}\Models\xgb_multi_24_48_72.pkl"
-FEATURE_PATH = rf"{BASE_DIR}\Models\feature_cols.pkl"
+import os
+from pathlib import Path
+
+# Get the directory where this script is located
+BASE_DIR = Path(__file__).parent.absolute()
+MODEL_PATH = BASE_DIR / "Models" / "xgb_multi_24_48_72.pkl"
+FEATURE_PATH = BASE_DIR / "Models" / "feature_cols.pkl"
 
 app = FastAPI(title="AQI Forecasting API (SIH 2025)")
 
