@@ -122,6 +122,8 @@ export const aqiService = {
 
   getForecast: async (stationId) => {
     try {
+      console.log("🔍 getForecast called for stationId:", stationId);
+
       // Get station name first
       const stations = await aqiService.getStations();
       const station = stations.find(s => s.id === stationId);
@@ -130,16 +132,25 @@ export const aqiService = {
         throw new Error('Station not found');
       }
 
+      console.log("📍 Fetching forecast for station:", station.name);
+
       // Call real forecast API
       const response = await axios.post(`${API_BASE}/api/forecast/station`, {
         station_name: station.name
+      });
+
+      console.log("📊 Backend forecast response:", {
+        success: response.data?.success,
+        hasRealtime: !!response.data?.realtime,
+        hasForecast: !!response.data?.forecast,
+        forecastKeys: response.data?.forecast ? Object.keys(response.data.forecast) : 'none'
       });
 
       if (response.data && response.data.success && response.data.forecast) {
         const forecast = response.data.forecast;
 
         // Convert to expected format
-        return [
+        const result = [
           { hour: 'Now', aqi: Math.round(response.data.realtime?.aqi || forecast['24h']) },
           { hour: '+6h', aqi: Math.round(forecast['6h'] || forecast['24h'] * 0.95) },
           { hour: '+12h', aqi: Math.round(forecast['12h'] || forecast['24h'] * 0.9) },
@@ -147,11 +158,15 @@ export const aqiService = {
           { hour: '+48h', aqi: Math.round(forecast['48h']) },
           { hour: '+72h', aqi: Math.round(forecast['72h']) }
         ];
+
+        console.log("✅ Converted forecast data:", result);
+        return result;
       }
 
       throw new Error('Invalid forecast response');
     } catch (error) {
-      console.warn('Failed to fetch forecast from backend:', error.message);
+      console.warn('❌ Failed to fetch forecast from backend:', error.message);
+      console.log("🔄 Using fallback mock data");
 
       // Fallback mock data
       return [
