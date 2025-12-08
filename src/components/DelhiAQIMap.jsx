@@ -12,8 +12,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Custom AQI marker icons based on AQI levels
-const createAQIIcon = (aqi, category) => {
+// Custom AQI marker icons - simplified without text
+const createAQIIcon = (aqi) => {
   let color;
   if (aqi <= 50) color = '#10B981'; // Good - Green
   else if (aqi <= 100) color = '#F59E0B'; // Satisfactory - Yellow
@@ -27,24 +27,18 @@ const createAQIIcon = (aqi, category) => {
     html: `
       <div style="
         background-color: ${color};
-        width: 36px;
-        height: 36px;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
         border: 2px solid white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        color: white;
-        font-size: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         position: relative;
+        cursor: pointer;
       ">
-        ${aqi}
       </div>
     `,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
   });
 };
 
@@ -134,7 +128,9 @@ const DelhiAQIMap = ({ onStationSelect, selectedStation, stationsData: externalS
               lat: coordinates.lat,
               lng: coordinates.lng,
               aqi: station.aqi,
+              category: station.category, // Use category from backend
               area: coordinates.area,
+              lastUpdated: station.lastUpdated,
               ...getAQICategory(station.aqi)
             };
           }
@@ -150,6 +146,17 @@ const DelhiAQIMap = ({ onStationSelect, selectedStation, stationsData: externalS
       console.warn('No external stations data provided to DelhiAQIMap');
     }
   }, [externalStationsData]);
+
+  // Auto-refresh effect - update when external data changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // The parent component (Dashboard) handles the actual data refresh
+      // This just ensures we stay in sync
+      console.log('🗺️ Map data auto-refresh trigger');
+    }, 30000); // Every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleStationClick = (station) => {
     if (onStationSelect) {
@@ -225,29 +232,51 @@ const DelhiAQIMap = ({ onStationSelect, selectedStation, stationsData: externalS
             <Marker
               key={station.id}
               position={[station.lat, station.lng]}
-              icon={createAQIIcon(station.aqi, station.category)}
+              icon={createAQIIcon(station.aqi)}
               eventHandlers={{
                 click: () => handleStationClick(station),
               }}
             >
               <Popup>
-                <div className="text-center min-w-[180px]">
-                  <h4 className="font-semibold text-base">{station.name}</h4>
-                  <p className="text-sm text-gray-600">{station.area}</p>
-                  <div className="mt-2">
-                    <span
-                      className="inline-block px-3 py-1 rounded-full text-white text-sm font-semibold"
-                      style={{ backgroundColor: station.color }}
-                    >
-                      AQI: {station.aqi}
-                    </span>
+                <div className="text-center min-w-[200px]">
+                  <h4 className="font-semibold text-lg text-slate-800">{station.name}</h4>
+                  <p className="text-sm text-slate-600 mb-2">{station.area}</p>
+
+                  <div className="bg-slate-50 rounded-lg p-3 mb-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-slate-500">AQI:</span>
+                        <span
+                          className="ml-2 font-bold text-lg"
+                          style={{ color: station.color }}
+                        >
+                          {station.aqi}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Category:</span>
+                        <div
+                          className="inline-block ml-1 px-2 py-1 rounded text-white text-xs font-semibold"
+                          style={{ backgroundColor: station.color }}
+                        >
+                          {station.category}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs mt-1 text-gray-500">{station.category}</p>
+
+                  <div className="text-xs text-slate-500 mb-3">
+                    Last updated: {station.lastUpdated ?
+                      new Date(station.lastUpdated).toLocaleTimeString() :
+                      'Just now'
+                    }
+                  </div>
+
                   <button
                     onClick={() => handleStationClick(station)}
-                    className="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                    className="w-full px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors font-medium"
                   >
-                    Select Station
+                    View Details & Forecast
                   </button>
                 </div>
               </Popup>

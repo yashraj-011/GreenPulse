@@ -19,6 +19,31 @@ export default function Dashboard() {
   const [loadingSources, setLoadingSources] = useState(false);
   const [stationSuggestions, setStationSuggestions] = useState([]);
 
+  // Auto-refresh function
+  const refreshStationsData = async () => {
+    try {
+      console.log('🔄 Auto-refreshing stations data...');
+      const data = (await aqiService.getStations()) || [];
+      setStations(data);
+
+      // Update suggestions
+      const suggestions = data.map(station => station.name).slice(0, 16);
+      setStationSuggestions(suggestions);
+
+      // Update selected station if it exists
+      if (selected && !selected.isVirtual) {
+        const updatedSelected = data.find(s => s.id === selected.id);
+        if (updatedSelected) {
+          setSelected(updatedSelected);
+        }
+      }
+
+      console.log('✅ Stations data refreshed successfully');
+    } catch (e) {
+      console.warn('❌ Failed to refresh stations data', e);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       setLoadingStations(true);
@@ -38,6 +63,15 @@ export default function Dashboard() {
       }
     })();
   }, []);
+
+  // Auto-refresh timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshStationsData();
+    }, 60000); // Refresh every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [selected]); // Include selected in dependencies to avoid stale closures
 
   useEffect(() => {
     if (!selected) return;
