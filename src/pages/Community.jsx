@@ -219,23 +219,23 @@ export default function Community() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
             <ShieldCheck size={14} /> Citizen community watch
           </div>
-          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Community Reporting</h1>
-          <p className="mt-1 text-sm text-slate-500">Share on-ground incidents so others can plan safer commutes and outdoor time.</p>
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">Community Reporting</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Share on-ground incidents so others can plan safer commutes and outdoor time.</p>
         </div>
 
-        <div className="flex items-center gap-3 rounded-2xl bg-white/70 px-4 py-2 shadow-sm backdrop-blur-md">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Radio size={14} className="text-emerald-500" /> Live citizen feed
+        <div className="flex items-center gap-3 rounded-2xl bg-white/70 dark:bg-slate-800/70 px-4 py-2 shadow-sm backdrop-blur-md">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-300">
+            <Radio size={14} className="text-emerald-500 dark:text-emerald-400" /> Live citizen feed
           </div>
-          <div className="h-6 w-px bg-slate-200" />
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="h-6 w-px bg-slate-200 dark:bg-slate-600" />
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-300">
             <span>Simulate admin</span>
             <button
               onClick={() => setIsAdmin((s) => !s)}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${isAdmin ? "bg-emerald-600 text-white shadow-md" : "bg-slate-100 text-slate-700"}`}>
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${isAdmin ? "bg-emerald-600 text-white shadow-md" : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"}`}>
               {isAdmin ? "Admin ON" : "Admin OFF"}
             </button>
           </div>
@@ -249,8 +249,8 @@ export default function Community() {
             <MapPin size={20} className="text-primary-600" />
           </div>
           <div>
-            <div className="text-sm font-semibold">Local Updates</div>
-            <div className="text-xs text-slate-500">Latest local tips, notices and incoming reports</div>
+            <div className="text-sm font-semibold dark:text-slate-50">Local Updates</div>
+            <div className="text-xs text-slate-500 dark:text-slate-300">Latest local tips, notices and incoming reports</div>
           </div>
         </div>
 
@@ -259,53 +259,53 @@ export default function Community() {
             <div style={{ transform: `translateY(${-activeUpdateIndex * 56}px)`, transition: "transform .45s" }}>
               {localUpdates.map((u) => (
                 <div key={u.id} className="flex items-center justify-between" style={{ height: 56 }}>
-                  <div className="text-sm text-slate-700">
-                    <strong className="mr-2 text-xs text-slate-500">{u.title}:</strong>
+                  <div className="text-sm text-slate-700 dark:text-slate-200">
+                    <strong className="mr-2 text-xs text-slate-500 dark:text-slate-300">{u.title}:</strong>
                     <span className="line-clamp-2">{u.text}</span>
                   </div>
-                  <div className="text-xs text-slate-400 ml-4">{u.time}</div>
+                  <div className="text-xs text-slate-400 dark:text-slate-400 ml-4">{u.time}</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="text-xs text-slate-400">Auto-updates</div>
+        <div className="text-xs text-slate-400 dark:text-slate-400">Auto-updates</div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* left: form + admin queue (if admin) */}
         <div className="lg:col-span-1 space-y-4">
           <div className="card p-4">
-            <h2 className="text-sm font-semibold mb-2">Report an incident</h2>
-            <p className="text-xs text-slate-500 mb-3">Reports are reviewed before going public. Add a photo to make your report stronger.</p>
+            <h2 className="text-sm font-semibold mb-2 dark:text-slate-50">Report an incident</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-300 mb-3">Reports are reviewed before going public. Add a photo to make your report stronger.</p>
 
             <form className="space-y-3" onSubmit={handleSubmit}>
               <div>
-                <label className="text-xs font-medium text-slate-600">Location</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Location</label>
                 <input name="location" value={form.location} onChange={handleChange} className="input mt-1" placeholder="e.g. Dhaula Kuan flyover" />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600">Description</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Description</label>
                 <textarea name="description" value={form.description} onChange={handleChange} className="input mt-1 h-28 resize-none" placeholder="Briefly describe what you are observing..." />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-600">Photo (optional)</label>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">Photo (optional)</label>
                 <div className="mt-2 flex items-center gap-3">
-                  <label className="inline-flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-2 rounded-2xl text-sm">
+                  <label className="inline-flex items-center gap-2 cursor-pointer bg-slate-100 dark:bg-slate-700 px-3 py-2 rounded-2xl text-sm dark:text-slate-200">
                     <ImageIcon size={16} />
                     <span>Add photo</span>
                     <input ref={fileRef} type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
                   </label>
                   {imagePreview && (
-                    <div className="w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-600">
                       <img src={imagePreview} alt="preview" className="object-cover w-full h-full" />
                     </div>
                   )}
                 </div>
-                <div className="text-xs text-slate-400 mt-2">Max 2.5 MB. Photos stored locally only.</div>
+                <div className="text-xs text-slate-400 dark:text-slate-400 mt-2">Max 2.5 MB. Photos stored locally only.</div>
               </div>
 
               <div className="flex gap-3">

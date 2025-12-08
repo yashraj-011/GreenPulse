@@ -1,8 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Wind,
-  MapPin,
   Bell,
   LogOut,
   Home,
@@ -16,8 +14,6 @@ const Navbar = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const currentAQI = 142;
-
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: Home },
     { id: 'safe-routes', label: 'Safe Routes', path: '/safe-routes', icon: Route },
@@ -26,13 +22,6 @@ const Navbar = ({ user, onLogout }) => {
   ];
 
   const isActive = (path) => location.pathname.startsWith(path);
-
-  const getAQIStatusColor = () => {
-    if (currentAQI <= 50) return 'text-green-600';
-    if (currentAQI <= 100) return 'text-yellow-600';
-    if (currentAQI <= 200) return 'text-orange-600';
-    return 'text-red-600';
-  };
 
   return (
     <header className="fixed top-0 inset-x-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700">
@@ -78,24 +67,8 @@ const Navbar = ({ user, onLogout }) => {
           })}
         </nav>
 
-        {/* Right: quick stats + dark mode toggle + user */}
+        {/* Right: dark mode toggle + user */}
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 shadow-sm">
-            <MapPin size={14} className="text-emerald-600 dark:text-emerald-400" />
-            <div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">Location</p>
-              <p className="text-xs font-semibold text-slate-800 dark:text-white">Delhi Central</p>
-            </div>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 shadow-sm">
-            <Wind size={14} className="text-orange-500 dark:text-orange-400" />
-            <div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">AQI Now</p>
-              <p className={`text-xs font-semibold ${getAQIStatusColor()}`}>{currentAQI}</p>
-            </div>
-          </div>
-
           <DarkModeToggle />
 
           <button className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600">

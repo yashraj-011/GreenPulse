@@ -40,7 +40,7 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
         {/* Gauge */}
         <div style={{ width: size }} className="flex-shrink-0">
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-            <circle cx={cx} cy={cy} r={radius} stroke="#EFF6FF" strokeWidth={stroke} fill="none" strokeLinecap="round" />
+            <circle cx={cx} cy={cy} r={radius} stroke="#EFF6FF" className="dark:stroke-slate-600" strokeWidth={stroke} fill="none" strokeLinecap="round" />
             <circle
               cx={cx}
               cy={cy}
@@ -54,12 +54,12 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
               transform={`rotate(-90 ${cx} ${cy})`}
               style={{ transition: "stroke-dashoffset 700ms cubic-bezier(.2,.9,.2,1), stroke 300ms" }}
             />
-            <circle cx={cx} cy={cy} r={radius - stroke - 4} fill="#ffffff" />
+            <circle cx={cx} cy={cy} r={radius - stroke - 4} fill="#ffffff" className="dark:fill-slate-700" />
             <g>
-              <text x={cx} y={cy - 4} textAnchor="middle" fontSize="28" fontWeight="700" fill="#0f172a">
+              <text x={cx} y={cy - 4} textAnchor="middle" fontSize="28" fontWeight="700" fill="#0f172a" className="dark:fill-slate-50">
                 {aqi}
               </text>
-              <text x={cx} y={cy + 20} textAnchor="middle" fontSize="12" fill="#475569">
+              <text x={cx} y={cy + 20} textAnchor="middle" fontSize="12" fill="#475569" className="dark:fill-slate-300">
                 {status.label}
               </text>
             </g>
@@ -70,9 +70,9 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs text-slate-500">Current AQI</p>
-              <h3 className="text-lg font-semibold text-slate-900 leading-tight">{station?.name || "—"}</h3>
-              <p className="text-[12px] text-slate-500 mt-1">{station?.category || ""}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">Current AQI</p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 leading-tight">{station?.name || "—"}</h3>
+              <p className="text-[12px] text-slate-500 dark:text-slate-300 mt-1">{station?.category || ""}</p>
             </div>
 
             {/* Search input (small) */}
@@ -101,13 +101,13 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm">
-              <div className="text-xs text-slate-500">Category</div>
-              <div className="font-semibold text-slate-800 mt-1">{station?.category || "—"}</div>
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 p-3 text-sm">
+              <div className="text-xs text-slate-500 dark:text-slate-300">Category</div>
+              <div className="font-semibold text-slate-800 dark:text-slate-50 mt-1">{station?.category || "—"}</div>
             </div>
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm">
-              <div className="text-xs text-slate-500">Last updated</div>
-              <div className="font-semibold text-slate-800 mt-1">Just now</div>
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 p-3 text-sm">
+              <div className="text-xs text-slate-500 dark:text-slate-300">Last updated</div>
+              <div className="font-semibold text-slate-800 dark:text-slate-50 mt-1">Just now</div>
             </div>
           </div>
         </div>

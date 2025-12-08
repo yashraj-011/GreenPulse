@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply min-h-screen antialiased text-slate-900 dark:text-slate-100;
+    @apply min-h-screen antialiased text-slate-900 dark:text-slate-50;
     /* very soft mint‑blue background like your hero section */
     @apply bg-gradient-to-br from-primary-50 via-skysoft-50 to-skysoft-100;
     @apply dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900;
@@ -14,7 +14,7 @@
     @apply min-h-screen;
     @apply bg-gradient-to-br from-primary-50 via-skysoft-50 to-skysoft-100;
     @apply dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900;
-    @apply text-slate-900 dark:text-slate-100;
+    @apply text-slate-900 dark:text-slate-50;
   }
 
   ::-webkit-scrollbar {
@@ -36,8 +36,8 @@
 @layer components {
   /* main white surface */
   .card {
-    @apply bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700;
-    @apply shadow-[0_22px_50px_rgba(15,23,42,0.07)] dark:shadow-[0_22px_50px_rgba(0,0,0,0.3)];
+    @apply bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-600;
+    @apply shadow-[0_22px_50px_rgba(15,23,42,0.07)] dark:shadow-[0_22px_50px_rgba(0,0,0,0.4)];
     @apply p-6;
   }
 
@@ -69,13 +69,13 @@
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-semibold;
-    @apply bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600;
+    @apply bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-50 border border-slate-200 dark:border-slate-500;
     @apply hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors;
   }
 
   .input {
-    @apply w-full rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700;
-    @apply px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500;
+    @apply w-full rounded-2xl border border-slate-200 dark:border-slate-500 bg-white dark:bg-slate-700;
+    @apply px-4 py-2.5 text-sm text-slate-900 dark:text-slate-50 placeholder:text-slate-400 dark:placeholder:text-slate-400;
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
     @apply transition-all;
   }
@@ -94,7 +94,7 @@
   }
   .nav-pill-active {
     @apply bg-primary-50 text-emerald-800 border border-emerald-200;
-    @apply dark:bg-primary-900 dark:bg-opacity-30 dark:text-emerald-300 dark:border-emerald-700;
+    @apply dark:bg-primary-900 dark:bg-opacity-30 dark:text-emerald-300 dark:border-emerald-600;
   }
 }
 

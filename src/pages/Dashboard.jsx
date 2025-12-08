@@ -173,8 +173,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Dashboard</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Live station-wise AQI and 24–72 hour forecasts for Delhi-NCR.</p>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Dashboard</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-300 mb-6">Live station-wise AQI and 24–72 hour forecasts for Delhi-NCR.</p>
 
         {/* Top center AQI card */}
         <div className="flex justify-center">
@@ -192,14 +192,14 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-2 gap-6 mt-6">
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-slate-800 dark:text-white">{range}-Hour Forecast</h2>
+              <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-50">{range}-Hour Forecast</h2>
               <div className="flex gap-1 text-xs">
                 {["24", "48", "72"].map((r) => (
                   <button
                     key={r}
                     onClick={() => setRange(r)}
                     className={`px-3 py-1 rounded-full border ${
-                      range === r ? "bg-primary-600 text-white border-primary-600" : "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600"
+                      range === r ? "bg-primary-600 text-white border-primary-600" : "bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-200 border-slate-200 dark:border-slate-500"
                     }`}
                   >
                     {r}h
@@ -211,7 +211,7 @@ export default function Dashboard() {
             <div style={{ minHeight: 240 }}>
               {loadingForecast ? (
                 <div className="flex items-center justify-center h-56">
-                  <div className="text-slate-500 dark:text-slate-400 text-sm">Loading forecast data...</div>
+                  <div className="text-slate-500 dark:text-slate-300 text-sm">Loading forecast data...</div>
                 </div>
               ) : (
                 <div className="h-56">
@@ -224,9 +224,9 @@ export default function Dashboard() {
           <div>
             {loadingSources ? (
               <div className="card p-6">
-                <h3 className="text-sm font-semibold mb-2 dark:text-white">Pollution Sources (Real-time)</h3>
+                <h3 className="text-sm font-semibold mb-2 dark:text-slate-50">Pollution Sources (Real-time)</h3>
                 <div className="flex items-center justify-center" style={{ height: 180 }}>
-                  <div className="text-slate-500 dark:text-slate-400 text-sm">Loading sources data...</div>
+                  <div className="text-slate-500 dark:text-slate-300 text-sm">Loading sources data...</div>
                 </div>
               </div>
             ) : (
@@ -237,21 +237,21 @@ export default function Dashboard() {
 
         {/* Stations list below */}
         <div className="card mt-6 p-6">
-          <h2 className="text-sm font-semibold text-slate-800 dark:text-white mb-3">Monitoring Stations</h2>
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-50 mb-3">Monitoring Stations</h2>
           <div className="grid md:grid-cols-3 gap-3 text-sm">
             {stations.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setSelected(s)}
                 className={`flex items-center justify-between px-3 py-2 rounded-xl border text-left ${
-                  selected?.id === s.id ? "bg-primary-50 dark:bg-primary-900 dark:bg-opacity-30 border-primary-200 dark:border-primary-700" : "bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600"
+                  selected?.id === s.id ? "bg-primary-50 dark:bg-primary-900 dark:bg-opacity-30 border-primary-200 dark:border-primary-700" : "bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-600"
                 }`}
               >
                 <div>
-                  <p className="font-semibold text-slate-800 dark:text-white">{s.name}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{s.category}</p>
+                  <p className="font-semibold text-slate-800 dark:text-slate-50">{s.name}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-300">{s.category}</p>
                 </div>
-                <span className="text-sm font-bold dark:text-white">{s.aqi}</span>
+                <span className="text-sm font-bold dark:text-slate-50">{s.aqi}</span>
               </button>
             ))}
           </div>
