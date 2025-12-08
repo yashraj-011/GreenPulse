@@ -360,7 +360,17 @@ def get_features():
     """
     Existing endpoint: used by Node backend to fetch feature order.
     """
-    return {"features": [str(f) for f in feature_names]}
+    print(f"🔍 FASTAPI /features endpoint called")
+    print(f"📋 Returning {len(feature_names)} feature names")
+
+    result = {"features": [str(f) for f in feature_names]}
+
+    if len(feature_names) > 0:
+        print(f"✅ Features available: {feature_names[:5]}{'...' if len(feature_names) > 5 else ''}")
+    else:
+        print(f"⚠️ No features loaded! Model may not be initialized.")
+
+    return result
 
 
 @app.get("/stations")
@@ -437,21 +447,32 @@ def predict_station(req: StationForecastRequest):
         3. Run model for each code
         4. Average predictions & SHAP
     """
+    print(f"🚀 FASTAPI PREDICT_STATION START")
+    print(f"📍 Station name received: {req.station_name}")
+    print(f"📊 Data keys received: {len(req.data.keys()) if req.data else 0}")
+    print(f"📊 Sample data: {dict(list(req.data.items())[:5]) if req.data else 'None'}")
+
     # 1) resolve canonical
     canonical = _resolve_canonical_station(req.station_name)
     if canonical is None:
+        print(f"❌ Station name not found: {req.station_name}")
         raise HTTPException(
             status_code=400,
             detail=f"Unknown station name: {req.station_name}",
         )
 
+    print(f"✅ Canonical station resolved: {canonical}")
+
     meta = CANONICAL_STATION_MAP.get(canonical)
     codes = meta.get("codes", [])
     if not codes:
+        print(f"❌ No codes found for canonical: {canonical}")
         raise HTTPException(
             status_code=400,
             detail=f"No station codes configured for canonical '{canonical}'",
         )
+
+    print(f"🔢 Station codes to use: {codes}")
 
     # 2) ensure all required NON-station features exist
     base_data = dict(req.data)  # copy
@@ -461,20 +482,31 @@ def predict_station(req: StationForecastRequest):
 
     missing = [f for f in feature_names if f not in base_data and f != "station_code"]
     if missing:
+        print(f"❌ Missing features: {missing[:10]}{'...' if len(missing) > 10 else ''}")
+        print(f"📋 Expected {len(feature_names)} features, got {len(base_data)}")
         raise HTTPException(
             status_code=400,
-            detail=f"Missing features (excluding station_code): {missing}",
+            detail=f"Missing features (excluding station_code): {missing[:10]}",
         )
+
+    print(f"✅ All {len(feature_names)} features present")
 
     # 3) average across all codes
     try:
+        print(f"🤖 Running ML predictions for {len(codes)} station codes...")
         preds_mean, contrib = _average_across_station_codes(base_data, codes)
+        print(f"📈 Prediction results: 24h={preds_mean[0]:.1f}, 48h={preds_mean[1]:.1f}, 72h={preds_mean[2]:.1f}")
     except KeyError as e:
+        print(f"❌ KeyError in prediction: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except ValueError as e:
+        print(f"❌ ValueError in prediction: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"❌ Unexpected error in prediction: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
-    return {
+    result = {
         "station": canonical,
         "codes_used": codes,
         "forecast": {
@@ -484,6 +516,11 @@ def predict_station(req: StationForecastRequest):
         },
         "contribution": contrib,
     }
+
+    print(f"✅ FASTAPI Response prepared successfully")
+    print(f"📤 Forecast: {result['forecast']}")
+
+    return result
 
 
 # ------------------------------------------------------
