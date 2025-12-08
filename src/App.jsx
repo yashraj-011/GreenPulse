@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
+import { ThemeProvider } from './contexts/ThemeContext';
 import Navbar from './components/Navbar';
 
 import Login from './pages/auth/Login';
@@ -46,60 +47,62 @@ function App() {
 );
 
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={user ? <Navigate to="/dashboard" replace /> : <Login onSuccess={handleAuthSuccess} />}
-      />
-      <Route
-        path="/signup"
-        element={user ? <Navigate to="/dashboard" replace /> : <Signup onSuccess={handleAuthSuccess} />}
-      />
+    <ThemeProvider>
+      <Routes>
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/dashboard" replace /> : <Login onSuccess={handleAuthSuccess} />}
+        />
+        <Route
+          path="/signup"
+          element={user ? <Navigate to="/dashboard" replace /> : <Signup onSuccess={handleAuthSuccess} />}
+        />
 
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Dashboard />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/safe-routes"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <SafeRoutes />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/community"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Community />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Profile />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
-    
-      <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Dashboard />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/safe-routes"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <SafeRoutes />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/community"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Community />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <Profile />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </ThemeProvider>
   );
 }
 
