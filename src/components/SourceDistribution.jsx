@@ -12,7 +12,7 @@ import { aqiService } from "../services/aqiService";
 
 const COLORS = ["#EF4444", "#F59E0B", "#6366F1", "#10B981", "#94A3B8"]; // red, amber, indigo, green, gray
 
-export default function SourceDistribution({ data: propData, stationName }) {
+export default function SourceDistribution({ data: propData }) {
   const [data, setData] = useState(propData || []);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function SourceDistribution({ data: propData, stationName }) {
     (async () => {
       try {
         if (aqiService && typeof aqiService.getSources === "function") {
-          const resp = await aqiService.getSources(stationName);
+          const resp = await aqiService.getSources();
           if (!mounted) return;
           if (Array.isArray(resp) && resp.length) {
             setData(resp);
@@ -51,7 +51,7 @@ export default function SourceDistribution({ data: propData, stationName }) {
     return () => {
       mounted = false;
     };
-  }, [propData, stationName]);
+  }, [propData]);
 
   if (!data || !data.length) {
     return (

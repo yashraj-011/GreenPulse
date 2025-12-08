@@ -49,11 +49,11 @@ export default function Dashboard() {
       }
     })();
 
-    // optional: try fetch source distribution from API for selected station
+    // optional: try fetch source distribution from API, otherwise SourceDistribution will use fallback
     (async () => {
       try {
-        if (selected && aqiService && typeof aqiService.getSources === "function") {
-          const s = await aqiService.getSources(selected.name);
+        if (aqiService && typeof aqiService.getSources === "function") {
+          const s = await aqiService.getSources();
           if (Array.isArray(s) && s.length) setSourcesData(s);
         }
       } catch (e) {
@@ -71,20 +71,6 @@ export default function Dashboard() {
       } catch (e) {
         console.warn("Failed to fetch forecast", e);
         setForecast([]);
-      }
-    })();
-
-    // Also fetch sources for the selected station
-    (async () => {
-      try {
-        if (aqiService && typeof aqiService.getSources === "function") {
-          const sources = await aqiService.getSources(selected.name);
-          if (Array.isArray(sources) && sources.length) {
-            setSourcesData(sources);
-          }
-        }
-      } catch (e) {
-        console.warn("Failed to fetch sources", e);
       }
     })();
   }, [selected]);
@@ -172,7 +158,7 @@ export default function Dashboard() {
           </div>
 
           <div>
-            <SourceDistribution data={sourcesData} stationName={selected?.name} />
+            <SourceDistribution data={sourcesData} />
           </div>
         </div>
 
