@@ -48,18 +48,6 @@ export default function Dashboard() {
         setLoadingStations(false);
       }
     })();
-
-    // optional: try fetch source distribution from API, otherwise SourceDistribution will use fallback
-    (async () => {
-      try {
-        if (aqiService && typeof aqiService.getSources === "function") {
-          const s = await aqiService.getSources();
-          if (Array.isArray(s) && s.length) setSourcesData(s);
-        }
-      } catch (e) {
-        // ignore; SourceDistribution has demo fallback
-      }
-    })();
   }, []);
 
   useEffect(() => {
@@ -71,6 +59,19 @@ export default function Dashboard() {
       } catch (e) {
         console.warn("Failed to fetch forecast", e);
         setForecast([]);
+      }
+    })();
+
+    // Fetch sources for the selected station
+    (async () => {
+      try {
+        if (aqiService && typeof aqiService.getSources === "function") {
+          const s = await aqiService.getSources(selected.name);
+          if (Array.isArray(s) && s.length) setSourcesData(s);
+        }
+      } catch (e) {
+        console.warn("Failed to fetch sources for station", e);
+        // Keep existing sources data as fallback
       }
     })();
   }, [selected]);
