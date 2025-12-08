@@ -102,16 +102,24 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
 
           <div className="mt-4 grid grid-cols-3 gap-3">
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm">
-              <div className="text-xs text-slate-500">Primary</div>
-              <div className="font-semibold text-slate-800 mt-1">Very Poor</div>
+              <div className="text-xs text-slate-500">Category</div>
+              <div className="font-semibold text-slate-800 mt-1">{station?.category || status.label}</div>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm">
-              <div className="text-xs text-slate-500">PM10</div>
-              <div className="font-semibold text-slate-800 mt-1">—</div>
+              <div className="text-xs text-slate-500">AQI Value</div>
+              <div className="font-semibold text-slate-800 mt-1">{aqi || "—"}</div>
             </div>
             <div className="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm">
               <div className="text-xs text-slate-500">Last updated</div>
-              <div className="font-semibold text-slate-800 mt-1">Just now</div>
+              <div className="font-semibold text-slate-800 mt-1">
+                {station?.lastUpdated ?
+                  new Date(station.lastUpdated).toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) :
+                  "—"
+                }
+              </div>
             </div>
           </div>
         </div>
