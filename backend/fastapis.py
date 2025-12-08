@@ -8,11 +8,12 @@ import shap
 import numpy as np
 
 # ------------------------------------------------------
-# PATHS (adjust only if your folder moves)
+# PATHS (cross-platform using current directory)
 # ------------------------------------------------------
-BASE_DIR = r"D:\APP\backend"
-MODEL_PATH = rf"{BASE_DIR}\Models\xgb_multi_24_48_72.pkl"
-FEATURE_PATH = rf"{BASE_DIR}\Models\feature_cols.pkl"
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "Models", "xgb_multi_24_48_72.pkl")
+FEATURE_PATH = os.path.join(BASE_DIR, "Models", "feature_cols.pkl")
 
 app = FastAPI(title="AQI Forecasting API (SIH 2025)")
 
@@ -333,23 +334,51 @@ def _average_across_station_codes(
 def load_all():
     global model, feature_names, explainer_24, explainer_48, explainer_72
 
-    print("🔄 Loading XGBoost multi-output model...")
-    model = joblib.load(MODEL_PATH)
+    try:
+        print("🔄 Loading XGBoost multi-output model...")
+        print(f"📁 Model path: {MODEL_PATH}")
+        if not os.path.exists(MODEL_PATH):
+            raise FileNotFoundError(f"Model file not found: {MODEL_PATH}")
+        model = joblib.load(MODEL_PATH)
 
-    print("🔄 Loading feature list...")
-    feature_names = joblib.load(FEATURE_PATH)
+        print("🔄 Loading feature list...")
+        print(f"📁 Features path: {FEATURE_PATH}")
+        if not os.path.exists(FEATURE_PATH):
+            raise FileNotFoundError(f"Features file not found: {FEATURE_PATH}")
+        feature_names = joblib.load(FEATURE_PATH)
 
-    print("🔄 Building SHAP explainers for 24/48/72h...")
-    explainer_24 = shap.TreeExplainer(model.estimators_[0])
-    explainer_48 = shap.TreeExplainer(model.estimators_[1])
-    explainer_72 = shap.TreeExplainer(model.estimators_[2])
+        print("🔄 Building SHAP explainers for 24/48/72h...")
+        explainer_24 = shap.TreeExplainer(model.estimators_[0])
+        explainer_48 = shap.TreeExplainer(model.estimators_[1])
+        explainer_72 = shap.TreeExplainer(model.estimators_[2])
 
-    print("✅ Model + features + SHAP loaded successfully.")
+        print("✅ Model + features + SHAP loaded successfully.")
+        print(f"📊 Loaded {len(feature_names)} features")
+
+    except Exception as e:
+        print(f"❌ Failed to load model: {str(e)}")
+        print(f"📁 Working directory: {os.getcwd()}")
+        print(f"📁 Base directory: {BASE_DIR}")
+        # Don't raise - let the app start but endpoints will return errors
+        model = None
+        feature_names = []
 
 
 # ------------------------------------------------------
 # 5️⃣ ROUTES
 # ------------------------------------------------------
+
+@app.get("/")
+def health_check():
+    """
+    Health check endpoint to verify FastAPI is running.
+    """
+    return {
+        "status": "healthy",
+        "service": "AQI Forecasting API (SIH 2025)",
+        "model_loaded": model is not None,
+        "features_count": len(feature_names) if feature_names else 0
+    }
 
 @app.get("/features")
 def get_features():
@@ -433,6 +462,13 @@ def predict_station(req: StationForecastRequest):
         3. Run model for each code
         4. Average predictions & SHAP
     """
+    # Check if model is loaded
+    if model is None or not feature_names:
+        raise HTTPException(
+            status_code=503,
+            detail="ML model not loaded. Check server logs for startup errors."
+        )
+
     # 1) resolve canonical
     canonical = _resolve_canonical_station(req.station_name)
     if canonical is None:

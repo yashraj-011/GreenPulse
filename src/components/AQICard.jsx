@@ -14,6 +14,7 @@ function aqiStatus(aqi) {
 
 export default function AQICard({ station, onSearch, suggestions = [], loading = false }) {
   const [query, setQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const aqi = station && typeof station.aqi === "number" ? station.aqi : (station && parseInt(station.aqi, 10)) || 0;
   const pct = clamp((Math.min(aqi, 500) / 500) * 100, 0, 100);
@@ -31,8 +32,34 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (typeof onSearch === "function") onSearch(query.trim());
+    if (typeof onSearch === "function") {
+      const searchTerm = query.trim();
+      if (searchTerm) {
+        onSearch(searchTerm);
+        // Clear the search input after successful search
+        setQuery("");
+        setShowSuggestions(false);
+      }
+    }
   };
+
+  const handleClear = () => {
+    setQuery("");
+    setShowSuggestions(false);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setQuery(suggestion);
+    setShowSuggestions(false);
+    if (typeof onSearch === "function") {
+      onSearch(suggestion);
+      setQuery(""); // Clear after search
+    }
+  };
+
+  const filteredSuggestions = suggestions.filter(s =>
+    s.toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <div className="card p-6">
@@ -76,26 +103,51 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
             </div>
 
             {/* Search input (small) */}
-            <div style={{ minWidth: 220 }} className="flex items-center gap-2">
+            <div style={{ minWidth: 220 }} className="flex items-center gap-2 relative">
               <form onSubmit={handleSearch} className="flex items-center gap-2">
-                <input
-                  list={suggestions && suggestions.length ? "delhi-suggestions" : undefined}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search location (Delhi)"
-                  className="input px-3 py-2 w-52"
-                  aria-label="Search location"
-                />
-                <button type="submit" className="btn-primary px-3 py-2">
+                <div className="relative">
+                  <input
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setShowSuggestions(e.target.value.length > 0);
+                    }}
+                    onFocus={() => setShowSuggestions(query.length > 0)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    placeholder="Search location (Delhi)"
+                    className="input px-3 py-2 w-52 pr-8"
+                    aria-label="Search location"
+                  />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={handleClear}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      aria-label="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+
+                  {/* Custom suggestions dropdown */}
+                  {showSuggestions && filteredSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+                      {filteredSuggestions.slice(0, 8).map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className="w-full text-left px-3 py-2 hover:bg-slate-100 text-sm border-b border-slate-100 last:border-b-0"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button type="submit" className="btn-primary px-3 py-2" disabled={!query.trim()}>
                   Find
                 </button>
-                {suggestions && suggestions.length ? (
-                  <datalist id="delhi-suggestions">
-                    {suggestions.map((s) => (
-                      <option key={s} value={s} />
-                    ))}
-                  </datalist>
-                ) : null}
               </form>
             </div>
           </div>

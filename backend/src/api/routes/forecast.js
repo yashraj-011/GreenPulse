@@ -89,13 +89,43 @@ router.post("/station", async (req, res) => {
     await saveAqiData("Delhi", finalStation, rt.aqi, rt.category);
 
     // ----- ML MODEL CALL (unchanged) -----
-    const fastRes = await axios.post(
-      "http://127.0.0.1:8000/predict_station",
-      {
-        station_name: finalStation,
-        data: modelInput,
+    const fastApiUrl = process.env.FASTAPI_URL || "http://127.0.0.1:8000";
+    console.log(`🤖 Calling FastAPI at: ${fastApiUrl}/predict_station`);
+
+    let fastRes;
+    try {
+      fastRes = await axios.post(
+        `${fastApiUrl}/predict_station`,
+        {
+          station_name: finalStation,
+          data: modelInput,
+        },
+        {
+          timeout: 30000, // 30 second timeout
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      console.log("✅ FastAPI response received");
+    } catch (error) {
+      console.error("❌ FastAPI call failed:", error.message);
+      if (error.code === 'ECONNREFUSED') {
+        console.error("🚫 FastAPI server not running at", fastApiUrl);
+        return res.status(503).json({
+          success: false,
+          error: "ML prediction service unavailable. Please ensure FastAPI server is running."
+        });
       }
-    );
+      if (error.response) {
+        console.error("FastAPI error response:", error.response.status, error.response.data);
+        return res.status(error.response.status).json({
+          success: false,
+          error: error.response.data?.detail || "ML prediction failed"
+        });
+      }
+      throw error; // Re-throw if it's not a connection issue
+    }
 
     await saveForecast(finalStation, fastRes.data.forecast);
 

@@ -64,10 +64,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!selected) return;
+
+    console.log("🔄 Station changed, updating data for:", selected.name);
+
     (async () => {
       try {
+        console.log("📈 Fetching forecast for station ID:", selected.id);
         const data = (await aqiService.getForecast(selected.id)) || [];
         setForecast(data);
+        console.log("✅ Forecast data received:", data.length, "points");
       } catch (e) {
         console.warn("Failed to fetch forecast", e);
         setForecast([]);
@@ -77,10 +82,12 @@ export default function Dashboard() {
     // Also fetch sources for the selected station
     (async () => {
       try {
+        console.log("🎯 Fetching sources for station:", selected.name);
         if (aqiService && typeof aqiService.getSources === "function") {
           const sources = await aqiService.getSources(selected.name);
           if (Array.isArray(sources) && sources.length) {
             setSourcesData(sources);
+            console.log("✅ Sources data received:", sources);
           }
         }
       } catch (e) {
@@ -93,11 +100,14 @@ export default function Dashboard() {
   const handleLocationSearch = async (locationName) => {
     if (!locationName) return;
 
+    console.log("🔍 Searching for location:", locationName);
+
     // prefer server geocoding / lookup if available
     try {
       if (aqiService && typeof aqiService.getStationByLocation === "function") {
         const station = await aqiService.getStationByLocation(locationName);
         if (station) {
+          console.log("✅ Found station via API:", station.name);
           setSelected(station);
           return;
         }
@@ -113,9 +123,14 @@ export default function Dashboard() {
       if (!exact) exact = stations.find((s) => s.name && s.name.toLowerCase().includes(nameLower));
       if (!exact) {
         // last resort: pick first
+        console.log("⚠️ No exact match found, using first station");
         exact = stations[0];
+      } else {
+        console.log("✅ Found station via fallback:", exact.name);
       }
       setSelected(exact);
+    } else {
+      console.warn("❌ No stations available for search");
     }
   };
 
