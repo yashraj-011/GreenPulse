@@ -2,42 +2,13 @@
 
 import { getOpenWeatherPollution } from "./openweatherPollution.js";
 import { getAQICN } from "./aqicn.js";
-import { getAQICNDetailed } from "./aqicnDetailed.js";
+// import { getAQICNDetailed } from "./aqicnDetailed.js"; // Disabled for original compatibility
 import { getRealtimeWeather } from "./realtimeWeather.js";
 import { getRealtimeFires } from "./realtimeFires.js";
 import { getFeatureNames } from "./featureSchema.js";
 import { stations39 } from "../db/stations39.js";
 
-// -------------------------------------------
-// CACHE FOR AQICN DETAILED
-// -------------------------------------------
-const _cache = { aqicnDetailed: null };
-
-const CACHE_TTL_MS =
-  (process.env.AQICN_CACHE_MINUTES
-    ? Number(process.env.AQICN_CACHE_MINUTES)
-    : 2) *  // Reduced from 10 to 2 minutes for fresher data
-  60 *
-  1000;
-
-// -------------------------------------------
-// Cached AQICN Detailed
-// -------------------------------------------
-async function getCachedAQICNDetailed(opts = {}) {
-  const now = Date.now();
-
-  if (_cache.aqicnDetailed && now - _cache.aqicnDetailed.ts < CACHE_TTL_MS)
-    return _cache.aqicnDetailed.value;
-
-  try {
-    const val = await getAQICNDetailed(opts);
-    _cache.aqicnDetailed = { value: val, ts: Date.now() };
-    return val;
-  } catch (err) {
-    console.error("getAQICNDetailed error:", err.message);
-    return null;
-  }
-}
+// Cache disabled - using simple method for original compatibility
 
 // -------------------------------------------
 // Improved Fuzzy Station Matching
@@ -177,34 +148,27 @@ export async function buildFeatureVector(stationName = null) {
   console.log(`📋 Using ${featureNames.length} features:`, featureNames.length > 10 ? 'Full feature set' : featureNames);
 
   // -------------------------------------------
-  // AQICN DATA → Detailed fallback to basic
+  // AQI DATA - Use Simple Method (Matching Original)
+  // Always use basic AQICN method for compatibility with original
   // -------------------------------------------
   let aqicn = null;
 
-  const detailed = await getCachedAQICNDetailed({
-    bounds: {
-      minLat: 28.4,
-      minLon: 76.8,
-      maxLat: 28.9,
-      maxLon: 77.4,
-    },
-    concurrency: 5,
-  });
+  // Use simple method (same as Parth's original)
+  const basicAqicn = aqicnBasic || {
+    city_aqi: null,
+    stations: [],
+    diagnostics: { method: "basic_aqicn_only" },
+  };
 
-  if (detailed) {
-    aqicn = {
-      source: "aqicn",
-      city_aqi: detailed.city_aqi,
-      stations: detailed.stations || [],
-      diagnostics: detailed.diagnostics || {},
-    };
-  } else {
-    aqicn = aqicnBasic || {
-      city_aqi: null,
-      stations: [],
-      diagnostics: {},
-    };
-  }
+  aqicn = {
+    source: "aqicn_basic_compatible",
+    city_aqi: basicAqicn.city_aqi,
+    stations: basicAqicn.stations || [],
+    diagnostics: basicAqicn.diagnostics || { method: "basic_fallback" },
+  };
+
+  console.log("🔄 Using simple AQI method for original compatibility");
+  console.log("📊 Basic AQICN city AQI:", aqicn.city_aqi);
 
   // -------------------------------------------
   // MATCH STATION
