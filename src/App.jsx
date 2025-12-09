@@ -117,7 +117,7 @@ function App() {
           element={
             <ProtectedRoute>
               <AppLayout>
-                <Community />
+                <Community user={user} />
               </AppLayout>
             </ProtectedRoute>
           }

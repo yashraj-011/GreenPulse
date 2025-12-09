@@ -17,22 +17,23 @@ const Navbar = ({ user, onLogout }) => {
   const location = useLocation();
 
   const getNavItems = () => {
-    const baseItems = [
-      { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: Home },
-      { id: 'safe-routes', label: 'Safe Routes', path: '/safe-routes', icon: Route },
-      { id: 'community', label: 'Community', path: '/community', icon: MessageCircle },
-      { id: 'profile', label: 'Profile', path: '/profile', icon: User }
-    ];
-
-    // Add admin-only items if user is admin
     if (user?.role === 'admin') {
-      baseItems.splice(3, 0,
+      // Admin users see: Admin Panel, Policy Dashboard, Community (for report management), Profile
+      return [
         { id: 'admin', label: 'Admin Panel', path: '/admin', icon: Shield },
-        { id: 'policy', label: 'Policy', path: '/policy', icon: BarChart3 }
-      );
+        { id: 'policy', label: 'Policy Dashboard', path: '/policy', icon: BarChart3 },
+        { id: 'community', label: 'Community Reports', path: '/community', icon: MessageCircle },
+        { id: 'profile', label: 'Profile', path: '/profile', icon: User }
+      ];
+    } else {
+      // Regular users see: Dashboard, Safe Routes, Community, Profile
+      return [
+        { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: Home },
+        { id: 'safe-routes', label: 'Safe Routes', path: '/safe-routes', icon: Route },
+        { id: 'community', label: 'Community', path: '/community', icon: MessageCircle },
+        { id: 'profile', label: 'Profile', path: '/profile', icon: User }
+      ];
     }
-
-    return baseItems;
   };
 
   const navItems = getNavItems();
