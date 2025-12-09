@@ -17,6 +17,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.absolute()
 MODEL_PATH = BASE_DIR / "Models" / "xgb_multi_24_48_72.pkl"
 FEATURE_PATH = BASE_DIR / "Models" / "feature_cols.pkl"
+BIAS_PATH = BASE_DIR / "Models" / "seasonal_bias_vecs.pkl"
 
 app = FastAPI(title="AQI Forecasting API (SIH 2025)")
 
@@ -25,6 +26,7 @@ feature_names: List[str] = []
 explainer_24 = None
 explainer_48 = None
 explainer_72 = None
+seasonal_bias_vecs = None
 
 # ------------------------------------------------------
 # 1️⃣ CANONICAL STATION → TRAINING CODES + ALIASES
@@ -261,6 +263,40 @@ def _shap_array_to_dict(shap_arr: np.ndarray) -> Dict[str, float]:
     return {feature_names[i]: float(shap_arr[i]) for i in range(len(feature_names))}
 
 
+def _apply_seasonal_bias(predictions: np.ndarray, current_date = None) -> np.ndarray:
+    """
+    Apply seasonal bias correction based on Parth's original implementation.
+
+    Args:
+        predictions: Raw model predictions [24h, 48h, 72h]
+        current_date: Current date (if None, uses today's date)
+
+    Returns:
+        Bias-corrected predictions
+    """
+    if current_date is None:
+        from datetime import datetime
+        current_date = datetime.now()
+
+    # Determine season based on month (winter: Nov, Dec, Jan, Feb)
+    month = current_date.month
+    is_winter = month in [11, 12, 1, 2]
+
+    # Apply bias correction
+    if seasonal_bias_vecs is not None:
+        if is_winter:
+            bias = seasonal_bias_vecs.get("winter", np.array([0., 0., 0.]))
+        else:
+            bias = seasonal_bias_vecs.get("other", np.array([0., 0., 0.]))
+
+        # Add bias to predictions
+        corrected_predictions = predictions + bias
+        return corrected_predictions
+    else:
+        # If bias vectors not loaded, return original predictions
+        return predictions
+
+
 def _resolve_canonical_station(station_name: str) -> Optional[str]:
     """
     Fuzzy match:
@@ -289,7 +325,7 @@ def _resolve_canonical_station(station_name: str) -> Optional[str]:
 
 
 def _average_across_station_codes(
-    base_data: Dict[str, Any], 
+    base_data: Dict[str, Any],
     codes: List[int]
 ) -> Tuple[np.ndarray, Dict[str, Dict[str, float]]]:
 
@@ -299,6 +335,11 @@ def _average_across_station_codes(
     """
     if not codes:
         raise ValueError("No station codes provided")
+
+    # Validate station codes are within training range (0-77)
+    invalid_codes = [c for c in codes if c < 0 or c > 77]
+    if invalid_codes:
+        raise ValueError(f"Station codes {invalid_codes} are outside training range (0-77)")
 
     n = len(codes)
     preds_acc = np.zeros(3, dtype=float)
@@ -335,7 +376,7 @@ def _average_across_station_codes(
 # ------------------------------------------------------
 @app.on_event("startup")
 def load_all():
-    global model, feature_names, explainer_24, explainer_48, explainer_72
+    global model, feature_names, explainer_24, explainer_48, explainer_72, seasonal_bias_vecs
 
     print("🔄 Loading XGBoost multi-output model...")
     model = joblib.load(MODEL_PATH)
@@ -343,12 +384,15 @@ def load_all():
     print("🔄 Loading feature list...")
     feature_names = joblib.load(FEATURE_PATH)
 
+    print("🔄 Loading seasonal bias vectors...")
+    seasonal_bias_vecs = joblib.load(BIAS_PATH)
+
     print("🔄 Building SHAP explainers for 24/48/72h...")
     explainer_24 = shap.TreeExplainer(model.estimators_[0])
     explainer_48 = shap.TreeExplainer(model.estimators_[1])
     explainer_72 = shap.TreeExplainer(model.estimators_[2])
 
-    print("✅ Model + features + SHAP loaded successfully.")
+    print("✅ Model + features + SHAP + bias vectors loaded successfully.")
 
 
 # ------------------------------------------------------
@@ -416,6 +460,10 @@ def predict(input_data: InputData):
 
     try:
         preds, s24, s48, s72 = _predict_single(data)
+
+        # Apply seasonal bias correction
+        preds_corrected = _apply_seasonal_bias(preds)
+
     except KeyError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -427,9 +475,9 @@ def predict(input_data: InputData):
 
     return {
         "forecast": {
-            "24h": float(preds[0]),
-            "48h": float(preds[1]),
-            "72h": float(preds[2]),
+            "24h": float(preds_corrected[0]),
+            "48h": float(preds_corrected[1]),
+            "72h": float(preds_corrected[2]),
         },
         "contribution": contribution,
     }
@@ -495,7 +543,12 @@ def predict_station(req: StationForecastRequest):
     try:
         print(f"🤖 Running ML predictions for {len(codes)} station codes...")
         preds_mean, contrib = _average_across_station_codes(base_data, codes)
-        print(f"📈 Prediction results: 24h={preds_mean[0]:.1f}, 48h={preds_mean[1]:.1f}, 72h={preds_mean[2]:.1f}")
+        print(f"📈 Raw prediction results: 24h={preds_mean[0]:.1f}, 48h={preds_mean[1]:.1f}, 72h={preds_mean[2]:.1f}")
+
+        # Apply seasonal bias correction
+        preds_corrected = _apply_seasonal_bias(preds_mean)
+        print(f"📈 Bias-corrected results: 24h={preds_corrected[0]:.1f}, 48h={preds_corrected[1]:.1f}, 72h={preds_corrected[2]:.1f}")
+
     except KeyError as e:
         print(f"❌ KeyError in prediction: {e}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -510,9 +563,9 @@ def predict_station(req: StationForecastRequest):
         "station": canonical,
         "codes_used": codes,
         "forecast": {
-            "24h": float(preds_mean[0]),
-            "48h": float(preds_mean[1]),
-            "72h": float(preds_mean[2]),
+            "24h": float(preds_corrected[0]),
+            "48h": float(preds_corrected[1]),
+            "72h": float(preds_corrected[2]),
         },
         "contribution": contrib,
     }

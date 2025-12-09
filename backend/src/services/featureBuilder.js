@@ -249,29 +249,104 @@ export async function buildFeatureVector(stationName = null) {
   console.log("  - AQICN matched station:", stationInfo?.name || "None");
   console.log("  - Final station_name in rt:", rt.station_name);
 
+  // -------------------------------------------
+  // ENHANCED FEATURE MAPPING FOR 57-FEATURE MODEL
+  // -------------------------------------------
   const modelInput = {};
 
   featureNames.forEach((f) => {
     const key = f.toLowerCase();
 
-    if (key.includes("pm25")) modelInput[f] = rt.pm25 ?? 0;
-    else if (key.includes("pm10")) modelInput[f] = rt.pm10 ?? 0;
-    else if (key.includes("no2")) modelInput[f] = rt.no2 ?? 0;
-    else if (key === "no") modelInput[f] = rt.no2 ?? 0;
-    else if (key.includes("o3")) modelInput[f] = rt.o3 ?? 0;
-    else if (key.includes("so2")) modelInput[f] = rt.so2 ?? 0;
-    else if (key.startsWith("co")) modelInput[f] = rt.co ?? 0;
-    else if (key.includes("nh3")) modelInput[f] = rt.nh3 ?? 0;
-    else if (key.includes("aqi")) modelInput[f] = exactAQI;
-    else if (key.includes("fire")) modelInput[f] = rt.fire_count ?? 0;
-    else if (key.includes("temp")) modelInput[f] = rt.temp ?? 0;
-    else if (key.includes("hum")) modelInput[f] = rt.humidity ?? 0;
-    else if (key.includes("wind")) modelInput[f] = rt.wind ?? 0;
-    else if (key.includes("blh")) modelInput[f] = 300;
-    else modelInput[f] = 0;
+    // Core pollutants (exact matches from training)
+    if (key.includes("pm25") || key.includes("pm2.5")) {
+      modelInput[f] = rt.pm25 ?? 0;
+    } else if (key.includes("pm10")) {
+      modelInput[f] = rt.pm10 ?? 0;
+    } else if (key.includes("no2")) {
+      modelInput[f] = rt.no2 ?? 0;
+    } else if (key === "no") {
+      modelInput[f] = rt.no2 ?? 0;
+    } else if (key.includes("o3")) {
+      modelInput[f] = rt.o3 ?? 0;
+    } else if (key.includes("so2")) {
+      modelInput[f] = rt.so2 ?? 0;
+    } else if (key.startsWith("co")) {
+      modelInput[f] = rt.co ?? 0;
+    } else if (key.includes("nh3")) {
+      modelInput[f] = rt.nh3 ?? 0;
+    } else if (key.includes("benzene")) {
+      // Benzene not available from current APIs - use correlation approximation
+      // From training data, benzene often correlates with PM2.5/PM10
+      modelInput[f] = Math.max((rt.pm25 ?? 0) * 0.1, (rt.pm10 ?? 0) * 0.05);
+
+    // AQI features (current and lag approximations)
+    } else if (key === "aqi") {
+      modelInput[f] = exactAQI;
+    } else if (key === "aqi_lag1") {
+      // Approximate yesterday's AQI - assume slightly lower than current
+      modelInput[f] = exactAQI * 0.95;
+    } else if (key === "aqi_lag3") {
+      // 3 days ago - more variation
+      modelInput[f] = exactAQI * 0.9;
+    } else if (key === "aqi_lag7") {
+      // 7 days ago - seasonal pattern
+      modelInput[f] = exactAQI * 0.85;
+    } else if (key === "aqi_roll3d") {
+      // 3-day rolling average - smooth current value
+      modelInput[f] = exactAQI * 0.97;
+    } else if (key === "aqi_roll7d") {
+      // 7-day rolling average - more smoothed
+      modelInput[f] = exactAQI * 0.92;
+
+    // Weather features
+    } else if (key.includes("temp")) {
+      modelInput[f] = rt.temp ?? 25;
+    } else if (key.includes("hum")) {
+      modelInput[f] = rt.humidity ?? 40;
+    } else if (key.includes("wind")) {
+      modelInput[f] = rt.wind ?? 2;
+    } else if (key.includes("blh") || key.includes("boundary")) {
+      // Dynamic BLH based on weather conditions instead of hardcoded 300
+      // BLH correlates with temperature and wind
+      const temp = rt.temp ?? 25;
+      const wind = rt.wind ?? 2;
+      modelInput[f] = Math.max(200, Math.min(1500, 200 + temp * 15 + wind * 50));
+
+    // Fire features (current and lag approximations)
+    } else if (key === "fire_count") {
+      modelInput[f] = rt.fire_count ?? 0;
+    } else if (key === "fire_3_day_sum") {
+      // Approximate 3-day fire accumulation
+      modelInput[f] = (rt.fire_count ?? 0) * 2.5;
+    } else if (key === "fire_7_day_sum") {
+      // Approximate 7-day fire accumulation
+      modelInput[f] = (rt.fire_count ?? 0) * 4.5;
+    } else if (key === "fire_count_lag1") {
+      // Yesterday's fire count
+      modelInput[f] = (rt.fire_count ?? 0) * 0.8;
+    } else if (key === "fire_count_lag3") {
+      // 3 days ago fire count
+      modelInput[f] = (rt.fire_count ?? 0) * 0.6;
+    } else if (key === "fire_count_lag7") {
+      // 7 days ago fire count
+      modelInput[f] = (rt.fire_count ?? 0) * 0.4;
+    } else if (key === "fire_count_roll7d") {
+      // 7-day rolling average of fires
+      modelInput[f] = (rt.fire_count ?? 0) * 0.7;
+
+    // Station code (will be injected by FastAPI)
+    } else if (key.includes("station_code")) {
+      modelInput[f] = 0; // FastAPI will override this
+
+    // Default for any other features
+    } else {
+      console.warn(`⚠️ Unknown feature '${f}' - setting to 0`);
+      modelInput[f] = 0;
+    }
   });
 
-  console.log("✔ Feature Vector READY.");
+  console.log("✔ Feature Vector READY with enhanced mapping.");
+  console.log(`📊 Generated ${Object.keys(modelInput).length} features for model`);
 
   return { modelInput, rt, aqicn };
 }
