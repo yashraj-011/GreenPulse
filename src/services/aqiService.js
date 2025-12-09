@@ -257,40 +257,63 @@ export const aqiService = {
         }
       }
 
-      console.log(`📊 Using fallback demo data for ${stationName}`);
+      console.log(`📊 Using enhanced fallback data for ${stationName}`);
 
-      // Enhanced fallback demo data with time-based variation
+      // Enhanced fallback demo data with time and location-based variation
       const hour = new Date().getHours();
+      const stationLower = stationName.toLowerCase();
+
+      // Basic location patterns for fallback
+      let locationModifier = { traffic: 0, industry: 0, construction: 0, agriculture: 0, others: 0 };
+
+      if (stationLower.includes('airport') || stationLower.includes('igi')) {
+        locationModifier = { traffic: +20, industry: -5, construction: 0, agriculture: -10, others: -5 };
+      } else if (stationLower.includes('okhla') || stationLower.includes('mayapuri')) {
+        locationModifier = { traffic: -10, industry: +25, construction: -5, agriculture: -5, others: -5 };
+      } else if (stationLower.includes('rohini') || stationLower.includes('dwarka')) {
+        locationModifier = { traffic: +5, industry: -10, construction: +10, agriculture: +5, others: -10 };
+      } else if (stationLower.includes('narela') || stationLower.includes('bawana')) {
+        locationModifier = { traffic: -15, industry: -5, construction: -5, agriculture: +25, others: 0 };
+      } else if (stationLower.includes('gurgaon') || stationLower.includes('noida')) {
+        locationModifier = { traffic: +10, industry: +10, construction: +5, agriculture: -20, others: -5 };
+      }
+
       let baseData;
 
       if (hour >= 7 && hour <= 10 || hour >= 17 && hour <= 20) {
         // Rush hours - more traffic
         baseData = [
-          { name: "Traffic", value: 45 },
-          { name: "Industry", value: 20 },
-          { name: "Construction", value: 15 },
-          { name: "Stubble", value: 15 },
-          { name: "Others", value: 5 }
+          { name: "Traffic", value: Math.max(5, 45 + locationModifier.traffic) },
+          { name: "Industry", value: Math.max(5, 20 + locationModifier.industry) },
+          { name: "Construction", value: Math.max(5, 15 + locationModifier.construction) },
+          { name: "Stubble", value: Math.max(5, 15 + locationModifier.agriculture) },
+          { name: "Others", value: Math.max(5, 5 + locationModifier.others) }
         ];
       } else if (hour >= 22 || hour <= 6) {
         // Night - more stubble burning
         baseData = [
-          { name: "Stubble", value: 40 },
-          { name: "Traffic", value: 20 },
-          { name: "Industry", value: 25 },
-          { name: "Construction", value: 10 },
-          { name: "Others", value: 5 }
+          { name: "Stubble", value: Math.max(5, 40 + locationModifier.agriculture) },
+          { name: "Traffic", value: Math.max(5, 20 + locationModifier.traffic) },
+          { name: "Industry", value: Math.max(5, 25 + locationModifier.industry) },
+          { name: "Construction", value: Math.max(5, 10 + locationModifier.construction) },
+          { name: "Others", value: Math.max(5, 5 + locationModifier.others) }
         ];
       } else {
         // Regular hours
         baseData = [
-          { name: "Traffic", value: 35 },
-          { name: "Stubble", value: 25 },
-          { name: "Industry", value: 20 },
-          { name: "Dust", value: 15 },
-          { name: "Others", value: 5 }
+          { name: "Traffic", value: Math.max(5, 35 + locationModifier.traffic) },
+          { name: "Stubble", value: Math.max(5, 25 + locationModifier.agriculture) },
+          { name: "Industry", value: Math.max(5, 20 + locationModifier.industry) },
+          { name: "Construction", value: Math.max(5, 15 + locationModifier.construction) },
+          { name: "Others", value: Math.max(5, 5 + locationModifier.others) }
         ];
       }
+
+      // Normalize to 100%
+      const total = baseData.reduce((sum, item) => sum + item.value, 0);
+      baseData.forEach(item => {
+        item.value = Math.round((item.value / total) * 100);
+      });
 
       return baseData;
     } catch (error) {

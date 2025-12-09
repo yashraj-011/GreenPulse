@@ -191,6 +191,58 @@ class SourceAttributor:
         self.is_trained = True
         logger.info("Source attribution model initialized")
 
+    def _get_location_based_attribution(self, station_name: str) -> Dict[str, float]:
+        """Get location-specific base attribution patterns"""
+        # Define different pollution patterns for different areas
+        location_patterns = {
+            # Central Delhi - High traffic and commercial
+            'delhi central': {'traffic': 45, 'industry': 15, 'construction': 20, 'agriculture': 10, 'others': 10},
+            'connaught place': {'traffic': 50, 'industry': 10, 'construction': 25, 'agriculture': 5, 'others': 10},
+            'ito': {'traffic': 45, 'industry': 20, 'construction': 15, 'agriculture': 10, 'others': 10},
+            'chandni chowk': {'traffic': 40, 'industry': 25, 'construction': 15, 'agriculture': 10, 'others': 10},
+
+            # Industrial areas
+            'okhla': {'traffic': 25, 'industry': 50, 'construction': 10, 'agriculture': 10, 'others': 5},
+            'mayapuri': {'traffic': 30, 'industry': 45, 'construction': 15, 'agriculture': 5, 'others': 5},
+            'wazirpur': {'traffic': 25, 'industry': 40, 'construction': 20, 'agriculture': 10, 'others': 5},
+
+            # Residential areas
+            'rohini': {'traffic': 30, 'industry': 10, 'construction': 25, 'agriculture': 25, 'others': 10},
+            'dwarka': {'traffic': 35, 'industry': 15, 'construction': 30, 'agriculture': 15, 'others': 5},
+            'punjabi bagh': {'traffic': 40, 'industry': 15, 'construction': 20, 'agriculture': 15, 'others': 10},
+
+            # Airport/Highway areas
+            'igi airport': {'traffic': 60, 'industry': 10, 'construction': 15, 'agriculture': 10, 'others': 5},
+            'palam': {'traffic': 55, 'industry': 15, 'construction': 15, 'agriculture': 10, 'others': 5},
+
+            # Border/Rural areas - Higher agriculture
+            'narela': {'traffic': 20, 'industry': 15, 'construction': 15, 'agriculture': 40, 'others': 10},
+            'bawana': {'traffic': 15, 'industry': 20, 'construction': 10, 'agriculture': 45, 'others': 10},
+            'najafgarh': {'traffic': 20, 'industry': 15, 'construction': 15, 'agriculture': 40, 'others': 10},
+
+            # University areas
+            'north campus': {'traffic': 35, 'industry': 10, 'construction': 20, 'agriculture': 20, 'others': 15},
+            'dtu': {'traffic': 30, 'industry': 15, 'construction': 25, 'agriculture': 20, 'others': 10},
+
+            # Gurgaon - IT/Corporate hub
+            'gurgaon': {'traffic': 40, 'industry': 30, 'construction': 20, 'agriculture': 5, 'others': 5},
+            'udyog vihar': {'traffic': 35, 'industry': 40, 'construction': 15, 'agriculture': 5, 'others': 5},
+
+            # Noida - Mixed development
+            'noida': {'traffic': 35, 'industry': 25, 'construction': 25, 'agriculture': 10, 'others': 5},
+            'sector 62': {'traffic': 40, 'industry': 30, 'construction': 20, 'agriculture': 5, 'others': 5},
+        }
+
+        # Try to match station name with known patterns
+        for location, pattern in location_patterns.items():
+            if location in station_name or any(word in station_name for word in location.split()):
+                logger.info(f"Matched {station_name} to {location} pattern")
+                return pattern.copy()
+
+        # Default pattern if no match
+        logger.info(f"Using default pattern for {station_name}")
+        return {'traffic': 30, 'industry': 25, 'construction': 15, 'agriculture': 20, 'others': 10}
+
     def attribute_sources(self, station_name: str, current_aqi: Optional[float] = None) -> Dict[str, float]:
         """Attribute current pollution to different sources"""
         if not self.is_trained:
@@ -200,14 +252,10 @@ class SourceAttributor:
         now = datetime.now()
         hour = now.hour
 
-        # Adjust attribution based on time of day and season
-        base_attribution = {
-            'traffic': 30,
-            'industry': 25,
-            'construction': 15,
-            'agriculture': 20,
-            'others': 10
-        }
+        # Location-based base attribution (station-specific patterns)
+        base_attribution = self._get_location_based_attribution(station_name.lower())
+
+        logger.info(f"Base attribution for {station_name}: {base_attribution}")
 
         # Time-based adjustments
         if 7 <= hour <= 10 or 17 <= hour <= 20:  # Rush hours

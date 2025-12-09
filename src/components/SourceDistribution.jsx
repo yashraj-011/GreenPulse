@@ -14,12 +14,14 @@ const COLORS = ["#EF4444", "#F59E0B", "#6366F1", "#10B981", "#94A3B8"]; // red, 
 
 export default function SourceDistribution({ data: propData, selectedStation }) {
   const [data, setData] = useState(propData || []);
+  const [isUsingFallback, setIsUsingFallback] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     if (propData && propData.length) {
       setData(propData);
+      setIsUsingFallback(false);
       return;
     }
 
@@ -28,19 +30,26 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
         if (aqiService && typeof aqiService.getSources === "function") {
           // Use selected station name if available, otherwise fallback
           const stationName = selectedStation?.name || "Delhi Central";
+          console.log(`🔍 Fetching sources for: ${stationName}`);
+
           const resp = await aqiService.getSources(stationName);
           if (!mounted) return;
+
           if (Array.isArray(resp) && resp.length) {
+            console.log(`✅ Got real sources data for ${stationName}:`, resp);
             setData(resp);
+            setIsUsingFallback(false);
             return;
           }
         }
       } catch (e) {
-        // ignore and fall back
+        console.warn('Failed to get sources, using fallback:', e.message);
       }
 
       if (!mounted) return;
       // fallback demo data
+      console.log('📊 Using fallback demo data');
+      setIsUsingFallback(true);
       setData([
         { name: "Traffic", value: 35 },
         { name: "Stubble", value: 25 },
@@ -171,10 +180,17 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
           </div>
 
           <p className="text-xs text-slate-400 dark:text-slate-400 mt-3">
-            <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
-              Demo data - Connect to real API for live sources breakdown
-            </span>
+            {isUsingFallback ? (
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 bg-amber-400 rounded-full"></span>
+                Demo data - Connect to real API for live sources breakdown
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                Live data from ML-powered source attribution
+              </span>
+            )}
           </p>
         </div>
       </div>
