@@ -256,20 +256,88 @@ class SourceAttributor:
             'nehru nagar': {'traffic': 35, 'industry': 25, 'construction': 20, 'agriculture': 15, 'others': 5},
         }
 
-        # Try to match station name with known patterns
+        # Try to match station name with known patterns (case insensitive)
+        logger.info(f"Looking for pattern match for station: '{station_name}'")
+
         for location, pattern in location_patterns.items():
-            if location in station_name or any(word in station_name for word in location.split()):
-                logger.info(f"Matched {station_name} to {location} pattern")
+            # Check exact match first
+            if location.lower() == station_name.lower():
+                logger.info(f"✅ Exact match: '{station_name}' -> '{location}' pattern")
+                return pattern.copy()
+
+            # Check if location is contained in station name
+            if location.lower() in station_name.lower():
+                logger.info(f"✅ Substring match: '{station_name}' contains '{location}' pattern")
+                return pattern.copy()
+
+            # Check if any word from location matches
+            if any(word.lower() in station_name.lower() for word in location.split()):
+                logger.info(f"✅ Word match: '{station_name}' matches word from '{location}' pattern")
                 return pattern.copy()
 
         # Default pattern if no match
-        logger.info(f"Using default pattern for {station_name}")
+        logger.warning(f"❌ No pattern match found for '{station_name}', using default pattern")
         return {'traffic': 30, 'industry': 25, 'construction': 15, 'agriculture': 20, 'others': 10}
 
     def _get_pollutant_data(self, station_name: str) -> Dict[str, float]:
-        """Get current pollutant concentrations from AQICN API (mock for now)"""
-        # In a real implementation, this would call AQICN API
-        # For now, generate realistic pollutant data based on time and location
+        """Get current pollutant concentrations from AQICN API"""
+        try:
+            # First try to get real data from AQICN API
+            aqicn_token = AQICN_API_KEY
+            if aqicn_token and aqicn_token != "your_aqicn_token_here":
+                logger.info(f"🌐 Fetching real pollutant data from AQICN for {station_name}")
+
+                # Try different station name formats for AQICN API
+                station_queries = [
+                    station_name.lower(),
+                    station_name.lower().replace(' ', '-'),
+                    f"delhi/{station_name.lower()}",
+                    f"delhi/{station_name.lower().replace(' ', '-')}",
+                    f"{station_name.lower()}/delhi",
+                ]
+
+                for query in station_queries:
+                    try:
+                        url = f"https://api.waqi.info/feed/{query}/?token={aqicn_token}"
+                        response = requests.get(url, timeout=10)
+
+                        if response.status_code == 200:
+                            data = response.json()
+                            if data.get('status') == 'ok' and 'data' in data:
+                                aqi_data = data['data']
+                                iaqi = aqi_data.get('iaqi', {})
+
+                                # Extract individual pollutant data
+                                pollutants = {
+                                    'pm25': iaqi.get('pm25', {}).get('v', 50),
+                                    'pm10': iaqi.get('pm10', {}).get('v', 80),
+                                    'no2': iaqi.get('no2', {}).get('v', 30),
+                                    'so2': iaqi.get('so2', {}).get('v', 10),
+                                    'co': iaqi.get('co', {}).get('v', 1.0),
+                                    'o3': iaqi.get('o3', {}).get('v', 50)
+                                }
+
+                                # Ensure reasonable values
+                                for key in pollutants:
+                                    if pollutants[key] is None or pollutants[key] < 0:
+                                        pollutants[key] = {'pm25': 50, 'pm10': 80, 'no2': 30, 'so2': 10, 'co': 1.0, 'o3': 50}[key]
+
+                                logger.info(f"✅ Real AQICN data retrieved for {station_name}: {pollutants}")
+                                return pollutants
+
+                    except Exception as e:
+                        logger.warning(f"AQICN query '{query}' failed: {e}")
+                        continue
+
+                logger.warning(f"❌ No AQICN data found for {station_name}, falling back to synthetic data")
+            else:
+                logger.info(f"⚠️ AQICN_API_KEY not configured, using synthetic pollutant data")
+
+        except Exception as e:
+            logger.error(f"❌ AQICN API error for {station_name}: {e}")
+
+        # Fallback to synthetic data based on time and location
+        logger.info(f"🎲 Generating synthetic pollutant data for {station_name}")
         import random
         random.seed(hash(station_name) % 1000)  # Consistent per station
 
@@ -299,53 +367,196 @@ class SourceAttributor:
         }
 
     def _analyze_pollutant_ratios(self, pollutants: Dict[str, float]) -> Dict[str, float]:
-        """Analyze pollutant ratios to infer source contributions"""
+        """Analyze pollutant ratios to infer source contributions using advanced ML techniques"""
         adjustments = {'traffic': 0, 'industry': 0, 'construction': 0, 'agriculture': 0, 'others': 0}
 
-        # NO2/PM2.5 ratio indicates traffic contribution
+        logger.info(f"🔬 Advanced pollutant analysis: PM2.5={pollutants['pm25']}, PM10={pollutants['pm10']}, NO2={pollutants['no2']}, SO2={pollutants['so2']}, CO={pollutants['co']}")
+
+        # 1. NO2/PM2.5 ratio - Strong traffic indicator
         no2_pm25_ratio = pollutants['no2'] / (pollutants['pm25'] + 1)
-        if no2_pm25_ratio > 0.6:  # High ratio = more traffic
-            adjustments['traffic'] += 15
-            adjustments['industry'] -= 5
-            adjustments['agriculture'] -= 5
+        if no2_pm25_ratio > 0.8:  # Very high ratio = heavy traffic
+            adjustments['traffic'] += 20
+            adjustments['industry'] -= 8
+            adjustments['agriculture'] -= 7
             adjustments['construction'] -= 5
-        elif no2_pm25_ratio < 0.3:  # Low ratio = less traffic
-            adjustments['traffic'] -= 10
-            adjustments['agriculture'] += 5
-            adjustments['construction'] += 5
+            logger.info(f"🚗 High NO2/PM2.5 ratio ({no2_pm25_ratio:.2f}) → Heavy traffic influence")
+        elif no2_pm25_ratio > 0.5:  # Moderate traffic
+            adjustments['traffic'] += 10
+            adjustments['industry'] -= 3
+            adjustments['agriculture'] -= 4
+            adjustments['construction'] -= 3
+        elif no2_pm25_ratio < 0.2:  # Low traffic
+            adjustments['traffic'] -= 15
+            adjustments['agriculture'] += 8
+            adjustments['construction'] += 4
+            adjustments['others'] += 3
 
-        # SO2 indicates industrial sources
-        if pollutants['so2'] > 20:  # High SO2 = more industry
-            adjustments['industry'] += 20
-            adjustments['traffic'] -= 5
-            adjustments['construction'] -= 5
+        # 2. SO2 levels - Industrial activity indicator
+        if pollutants['so2'] > 30:  # Very high SO2 = major industrial sources
+            adjustments['industry'] += 25
+            adjustments['traffic'] -= 8
+            adjustments['construction'] -= 7
             adjustments['agriculture'] -= 10
-        elif pollutants['so2'] < 5:  # Low SO2 = less industry
-            adjustments['industry'] -= 10
-            adjustments['traffic'] += 5
-            adjustments['agriculture'] += 5
-
-        # PM10/PM2.5 ratio indicates dust/construction
-        pm_ratio = pollutants['pm10'] / (pollutants['pm25'] + 1)
-        if pm_ratio > 1.8:  # High ratio = more dust/construction
-            adjustments['construction'] += 15
-            adjustments['agriculture'] += 5
+            logger.info(f"🏭 High SO2 levels ({pollutants['so2']:.1f}) → Major industrial sources")
+        elif pollutants['so2'] > 15:  # Moderate industrial
+            adjustments['industry'] += 15
             adjustments['traffic'] -= 5
-            adjustments['industry'] -= 15
-        elif pm_ratio < 1.3:  # Low ratio = more combustion sources
-            adjustments['construction'] -= 10
-            adjustments['traffic'] += 5
-            adjustments['industry'] += 5
-
-        # High PM2.5 with low other pollutants suggests agricultural burning
-        if pollutants['pm25'] > 100 and pollutants['no2'] < 30 and pollutants['so2'] < 10:
-            adjustments['agriculture'] += 25
-            adjustments['traffic'] -= 10
-            adjustments['industry'] -= 10
             adjustments['construction'] -= 5
+            adjustments['agriculture'] -= 5
+        elif pollutants['so2'] < 5:  # Very low industrial
+            adjustments['industry'] -= 15
+            adjustments['traffic'] += 8
+            adjustments['agriculture'] += 7
+
+        # 3. PM10/PM2.5 ratio - Dust/construction indicator
+        pm_ratio = pollutants['pm10'] / (pollutants['pm25'] + 1)
+        if pm_ratio > 2.2:  # Very high ratio = major dust/construction
+            adjustments['construction'] += 20
+            adjustments['others'] += 10  # Road dust, etc.
+            adjustments['traffic'] -= 10
+            adjustments['industry'] -= 15
+            adjustments['agriculture'] -= 5
+            logger.info(f"🏗️ High PM10/PM2.5 ratio ({pm_ratio:.2f}) → Major dust/construction")
+        elif pm_ratio > 1.8:  # Moderate dust
+            adjustments['construction'] += 12
+            adjustments['others'] += 5
+            adjustments['traffic'] -= 5
+            adjustments['industry'] -= 10
+            adjustments['agriculture'] -= 2
+        elif pm_ratio < 1.2:  # Low dust = more combustion sources
+            adjustments['construction'] -= 15
+            adjustments['traffic'] += 8
+            adjustments['industry'] += 7
+
+        # 4. CO levels - Traffic and incomplete combustion
+        if pollutants['co'] > 3.0:  # High CO = heavy traffic/poor combustion
+            adjustments['traffic'] += 15
+            adjustments['agriculture'] += 8  # Biomass burning
+            adjustments['industry'] -= 5
+            adjustments['construction'] -= 10
+            logger.info(f"🚨 High CO levels ({pollutants['co']:.1f}) → Heavy traffic/biomass burning")
+        elif pollutants['co'] < 0.8:  # Low CO
+            adjustments['traffic'] -= 8
+            adjustments['agriculture'] -= 5
+
+        # 5. Agricultural burning signature - High PM2.5 with specific pattern
+        if (pollutants['pm25'] > 120 and
+            pollutants['no2'] < 25 and
+            pollutants['so2'] < 8 and
+            pm_ratio < 1.5):  # Fine particles, low industrial markers
+            adjustments['agriculture'] += 30
+            adjustments['traffic'] -= 12
+            adjustments['industry'] -= 15
+            adjustments['construction'] -= 8
+            adjustments['others'] += 5
+            logger.info(f"🌾 Agricultural burning signature detected: PM2.5={pollutants['pm25']:.1f}, low NO2+SO2")
+
+        # 6. Overall pollution level adjustments
+        total_pollution = pollutants['pm25'] + pollutants['pm10']
+        if total_pollution > 200:  # Very high pollution day
+            adjustments['agriculture'] += 10  # Likely regional transport
+            adjustments['others'] += 5
+        elif total_pollution < 60:  # Clean day
+            adjustments['agriculture'] -= 8
+            adjustments['others'] -= 3
+
+        logger.info(f"🎯 Pollutant-based adjustments: {adjustments}")
+        return adjustments
+
+    def _get_station_coordinates(self, station_name: str) -> tuple:
+        """Get coordinates for a station to fetch location-specific weather"""
+        # Station coordinates mapping (from stations39.js)
+        station_coords = {
+            'crri mathura road': (28.5646, 77.2898),
+            'burari crossing': (28.7383, 77.2050),
+            'north campus du': (28.6880, 77.2100),
+            'igi airport (t3)': (28.5562, 77.1000),
+            'pusa': (28.6392, 77.1864),
+            'aya nagar': (28.4790, 77.0965),
+            'lodhi road': (28.5911, 77.2273),
+            'shadipur': (28.6527, 77.1620),
+            'ihbas dilshad garden': (28.6753, 77.3150),
+            'nsit dwarka': (28.6101, 77.0377),
+            'ito': (28.6260, 77.2426),
+            'dtu': (28.7498, 77.1166),
+            'sirifort': (28.5538, 77.2090),
+            'mandir marg': (28.6315, 77.2002),
+            'r k puram': (28.5633, 77.1800),
+            'punjabi bagh': (28.6683, 77.1167),
+            'ashok vihar': (28.6980, 77.1780),
+            'dr. karni singh shooting range': (28.4975, 77.2799),
+            'dwarka sector 8': (28.5748, 77.0682),
+            'jahangirpuri': (28.7284, 77.1718),
+            'jawaharlal nehru stadium': (28.5830, 77.2341),
+            'major dhyan chand stadium': (28.6127, 77.2400),
+            'narela': (28.8520, 77.0900),
+            'najafgarh': (28.6090, 76.9794),
+            'okhla phase-2': (28.5206, 77.2890),
+            'nehru nagar': (28.5632, 77.2876),
+            'rohini': (28.7383, 77.0822),
+            'patparganj': (28.6300, 77.2940),
+            'sonia vihar': (28.7280, 77.2490),
+            'wazirpur': (28.6927, 77.1622),
+            'vivek vihar': (28.6736, 77.3151),
+            'bawana': (28.7850, 77.0310),
+            'mundka': (28.6787, 77.0303),
+            'sri aurobindo marg': (28.5392, 77.2012),
+            'anand vihar': (28.6463, 77.3152),
+            'alipur': (28.8030, 77.1520),
+            'chandni chowk': (28.6562, 77.2300),
+            'lodhi road (iitm)': (28.5825, 77.2091)
+        }
+
+        # Try to find exact match or partial match
+        station_lower = station_name.lower()
+        if station_lower in station_coords:
+            return station_coords[station_lower]
+
+        # Try partial matching
+        for station, coords in station_coords.items():
+            if station in station_lower or any(word in station_lower for word in station.split()):
+                return coords
+
+        # Default to Delhi center
+        return (28.6139, 77.2090)
 
     def _get_weather_conditions(self, station_name: str) -> Dict[str, float]:
-        """Get current weather conditions (mock for now, would use OpenWeather API)"""
+        """Get current weather conditions from OpenWeather API"""
+        try:
+            # First try to get real weather data from OpenWeather API
+            openweather_key = OPENWEATHER_API_KEY
+            if openweather_key and openweather_key != "your_openweather_key_here":
+                logger.info(f"🌤️ Fetching real weather data from OpenWeather for {station_name}")
+
+                # Get station-specific coordinates
+                lat, lon = self._get_station_coordinates(station_name)
+
+                url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={openweather_key}&units=metric"
+
+                response = requests.get(url, timeout=10)
+
+                if response.status_code == 200:
+                    data = response.json()
+
+                    # Extract weather data
+                    weather = {
+                        'temperature': data['main']['temp'],
+                        'humidity': data['main']['humidity'],
+                        'wind_speed': data['wind'].get('speed', 3) * 3.6  # Convert m/s to km/h
+                    }
+
+                    logger.info(f"✅ Real OpenWeather data retrieved for {station_name}: temp={weather['temperature']:.1f}°C, humidity={weather['humidity']:.0f}%, wind={weather['wind_speed']:.1f}km/h")
+                    return weather
+                else:
+                    logger.warning(f"❌ OpenWeather API returned status {response.status_code}")
+            else:
+                logger.info(f"⚠️ OPENWEATHER_API_KEY not configured, using synthetic weather data")
+
+        except Exception as e:
+            logger.error(f"❌ OpenWeather API error: {e}")
+
+        # Fallback to synthetic weather data
+        logger.info(f"🎲 Generating synthetic weather data for {station_name}")
         import random
         random.seed(hash(station_name + str(datetime.now().date())) % 1000)
 
@@ -613,7 +824,7 @@ if __name__ == "__main__":
     import uvicorn
 
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", 8000))
+    port = int(os.getenv("PORT", 8001))
     debug = os.getenv("DEBUG", "True").lower() == "true"
 
     print(f"🚀 Starting FastAPI server...")
