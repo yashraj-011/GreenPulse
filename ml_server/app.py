@@ -192,45 +192,68 @@ class SourceAttributor:
         logger.info("Source attribution model initialized")
 
     def _get_location_based_attribution(self, station_name: str) -> Dict[str, float]:
-        """Get location-specific base attribution patterns"""
-        # Define different pollution patterns for different areas
+        """Get location-specific base attribution patterns for all 39 Delhi stations"""
+        # Comprehensive patterns for all 39 stations from stations39.js
         location_patterns = {
             # Central Delhi - High traffic and commercial
-            'delhi central': {'traffic': 45, 'industry': 15, 'construction': 20, 'agriculture': 10, 'others': 10},
-            'connaught place': {'traffic': 50, 'industry': 10, 'construction': 25, 'agriculture': 5, 'others': 10},
             'ito': {'traffic': 45, 'industry': 20, 'construction': 15, 'agriculture': 10, 'others': 10},
             'chandni chowk': {'traffic': 40, 'industry': 25, 'construction': 15, 'agriculture': 10, 'others': 10},
+            'mandir marg': {'traffic': 50, 'industry': 15, 'construction': 20, 'agriculture': 10, 'others': 5},
+            'lodhi road': {'traffic': 45, 'industry': 20, 'construction': 20, 'agriculture': 10, 'others': 5},
+            'lodhi road (iitm)': {'traffic': 40, 'industry': 15, 'construction': 25, 'agriculture': 15, 'others': 5},
+            'sri aurobindo marg': {'traffic': 50, 'industry': 15, 'construction': 20, 'agriculture': 10, 'others': 5},
 
-            # Industrial areas
-            'okhla': {'traffic': 25, 'industry': 50, 'construction': 10, 'agriculture': 10, 'others': 5},
-            'mayapuri': {'traffic': 30, 'industry': 45, 'construction': 15, 'agriculture': 5, 'others': 5},
-            'wazirpur': {'traffic': 25, 'industry': 40, 'construction': 20, 'agriculture': 10, 'others': 5},
+            # Research/Institutional areas
+            'crri mathura road': {'traffic': 40, 'industry': 25, 'construction': 20, 'agriculture': 10, 'others': 5},
+            'north campus du': {'traffic': 35, 'industry': 10, 'construction': 20, 'agriculture': 20, 'others': 15},
+            'dtu': {'traffic': 30, 'industry': 15, 'construction': 25, 'agriculture': 20, 'others': 10},
+            'pusa': {'traffic': 25, 'industry': 15, 'construction': 15, 'agriculture': 35, 'others': 10},
 
-            # Residential areas
-            'rohini': {'traffic': 30, 'industry': 10, 'construction': 25, 'agriculture': 25, 'others': 10},
-            'dwarka': {'traffic': 35, 'industry': 15, 'construction': 30, 'agriculture': 15, 'others': 5},
+            # Airport/Highway areas - Highest traffic
+            'igi airport (t3)': {'traffic': 60, 'industry': 10, 'construction': 15, 'agriculture': 10, 'others': 5},
+
+            # South Delhi - Mixed residential/commercial
+            'r k puram': {'traffic': 40, 'industry': 15, 'construction': 25, 'agriculture': 15, 'others': 5},
+            'sirifort': {'traffic': 45, 'industry': 15, 'construction': 20, 'agriculture': 15, 'others': 5},
+            'aya nagar': {'traffic': 25, 'industry': 20, 'construction': 20, 'agriculture': 25, 'others': 10},
+            'dr. karni singh shooting range': {'traffic': 30, 'industry': 15, 'construction': 20, 'agriculture': 25, 'others': 10},
+
+            # West Delhi - Residential with some industry
             'punjabi bagh': {'traffic': 40, 'industry': 15, 'construction': 20, 'agriculture': 15, 'others': 10},
+            'shadipur': {'traffic': 35, 'industry': 25, 'construction': 20, 'agriculture': 15, 'others': 5},
+            'dwarka sector 8': {'traffic': 35, 'industry': 15, 'construction': 30, 'agriculture': 15, 'others': 5},
+            'nsit dwarka': {'traffic': 30, 'industry': 15, 'construction': 30, 'agriculture': 20, 'others': 5},
 
-            # Airport/Highway areas
-            'igi airport': {'traffic': 60, 'industry': 10, 'construction': 15, 'agriculture': 10, 'others': 5},
-            'palam': {'traffic': 55, 'industry': 15, 'construction': 15, 'agriculture': 10, 'others': 5},
+            # Industrial areas - Highest industry
+            'wazirpur': {'traffic': 25, 'industry': 40, 'construction': 20, 'agriculture': 10, 'others': 5},
+            'okhla phase-2': {'traffic': 25, 'industry': 50, 'construction': 10, 'agriculture': 10, 'others': 5},
+            'mundka': {'traffic': 20, 'industry': 45, 'construction': 15, 'agriculture': 15, 'others': 5},
 
-            # Border/Rural areas - Higher agriculture
+            # North Delhi - Mixed residential
+            'rohini': {'traffic': 30, 'industry': 10, 'construction': 25, 'agriculture': 25, 'others': 10},
+            'ashok vihar': {'traffic': 35, 'industry': 15, 'construction': 25, 'agriculture': 20, 'others': 5},
+            'jahangirpuri': {'traffic': 30, 'industry': 20, 'construction': 25, 'agriculture': 20, 'others': 5},
+            'burari crossing': {'traffic': 25, 'industry': 20, 'construction': 20, 'agriculture': 30, 'others': 5},
+            'alipur': {'traffic': 20, 'industry': 15, 'construction': 20, 'agriculture': 35, 'others': 10},
+
+            # Border/Rural areas - Highest agriculture
             'narela': {'traffic': 20, 'industry': 15, 'construction': 15, 'agriculture': 40, 'others': 10},
             'bawana': {'traffic': 15, 'industry': 20, 'construction': 10, 'agriculture': 45, 'others': 10},
             'najafgarh': {'traffic': 20, 'industry': 15, 'construction': 15, 'agriculture': 40, 'others': 10},
 
-            # University areas
-            'north campus': {'traffic': 35, 'industry': 10, 'construction': 20, 'agriculture': 20, 'others': 15},
-            'dtu': {'traffic': 30, 'industry': 15, 'construction': 25, 'agriculture': 20, 'others': 10},
+            # East Delhi - Mixed development
+            'anand vihar': {'traffic': 40, 'industry': 25, 'construction': 15, 'agriculture': 15, 'others': 5},
+            'patparganj': {'traffic': 35, 'industry': 25, 'construction': 20, 'agriculture': 15, 'others': 5},
+            'ihbas dilshad garden': {'traffic': 30, 'industry': 20, 'construction': 25, 'agriculture': 20, 'others': 5},
+            'vivek vihar': {'traffic': 35, 'industry': 20, 'construction': 25, 'agriculture': 15, 'others': 5},
+            'sonia vihar': {'traffic': 30, 'industry': 15, 'construction': 25, 'agriculture': 25, 'others': 5},
 
-            # Gurgaon - IT/Corporate hub
-            'gurgaon': {'traffic': 40, 'industry': 30, 'construction': 20, 'agriculture': 5, 'others': 5},
-            'udyog vihar': {'traffic': 35, 'industry': 40, 'construction': 15, 'agriculture': 5, 'others': 5},
+            # Sports/Entertainment areas
+            'jawaharlal nehru stadium': {'traffic': 50, 'industry': 10, 'construction': 25, 'agriculture': 10, 'others': 5},
+            'major dhyan chand stadium': {'traffic': 45, 'industry': 15, 'construction': 25, 'agriculture': 10, 'others': 5},
 
-            # Noida - Mixed development
-            'noida': {'traffic': 35, 'industry': 25, 'construction': 25, 'agriculture': 10, 'others': 5},
-            'sector 62': {'traffic': 40, 'industry': 30, 'construction': 20, 'agriculture': 5, 'others': 5},
+            # East Delhi industrial/residential mix
+            'nehru nagar': {'traffic': 35, 'industry': 25, 'construction': 20, 'agriculture': 15, 'others': 5},
         }
 
         # Try to match station name with known patterns
@@ -243,44 +266,229 @@ class SourceAttributor:
         logger.info(f"Using default pattern for {station_name}")
         return {'traffic': 30, 'industry': 25, 'construction': 15, 'agriculture': 20, 'others': 10}
 
+    def _get_pollutant_data(self, station_name: str) -> Dict[str, float]:
+        """Get current pollutant concentrations from AQICN API (mock for now)"""
+        # In a real implementation, this would call AQICN API
+        # For now, generate realistic pollutant data based on time and location
+        import random
+        random.seed(hash(station_name) % 1000)  # Consistent per station
+
+        base_pm25 = 80 + random.uniform(-30, 50)
+        base_pm10 = base_pm25 * random.uniform(1.2, 2.0)
+        base_no2 = 40 + random.uniform(-20, 40)
+        base_so2 = 15 + random.uniform(-10, 25)
+        base_co = 1.5 + random.uniform(-0.5, 2.0)
+        base_o3 = 60 + random.uniform(-30, 40)
+
+        # Add time-based variations
+        from datetime import datetime
+        hour = datetime.now().hour
+        if 7 <= hour <= 10 or 17 <= hour <= 20:  # Rush hours
+            base_no2 *= 1.4  # More traffic = more NO2
+            base_co *= 1.3
+        elif 22 <= hour or hour <= 6:  # Night
+            base_so2 *= 1.2  # More industrial activity
+
+        return {
+            'pm25': max(10, base_pm25),
+            'pm10': max(15, base_pm10),
+            'no2': max(5, base_no2),
+            'so2': max(2, base_so2),
+            'co': max(0.5, base_co),
+            'o3': max(20, base_o3)
+        }
+
+    def _analyze_pollutant_ratios(self, pollutants: Dict[str, float]) -> Dict[str, float]:
+        """Analyze pollutant ratios to infer source contributions"""
+        adjustments = {'traffic': 0, 'industry': 0, 'construction': 0, 'agriculture': 0, 'others': 0}
+
+        # NO2/PM2.5 ratio indicates traffic contribution
+        no2_pm25_ratio = pollutants['no2'] / (pollutants['pm25'] + 1)
+        if no2_pm25_ratio > 0.6:  # High ratio = more traffic
+            adjustments['traffic'] += 15
+            adjustments['industry'] -= 5
+            adjustments['agriculture'] -= 5
+            adjustments['construction'] -= 5
+        elif no2_pm25_ratio < 0.3:  # Low ratio = less traffic
+            adjustments['traffic'] -= 10
+            adjustments['agriculture'] += 5
+            adjustments['construction'] += 5
+
+        # SO2 indicates industrial sources
+        if pollutants['so2'] > 20:  # High SO2 = more industry
+            adjustments['industry'] += 20
+            adjustments['traffic'] -= 5
+            adjustments['construction'] -= 5
+            adjustments['agriculture'] -= 10
+        elif pollutants['so2'] < 5:  # Low SO2 = less industry
+            adjustments['industry'] -= 10
+            adjustments['traffic'] += 5
+            adjustments['agriculture'] += 5
+
+        # PM10/PM2.5 ratio indicates dust/construction
+        pm_ratio = pollutants['pm10'] / (pollutants['pm25'] + 1)
+        if pm_ratio > 1.8:  # High ratio = more dust/construction
+            adjustments['construction'] += 15
+            adjustments['agriculture'] += 5
+            adjustments['traffic'] -= 5
+            adjustments['industry'] -= 15
+        elif pm_ratio < 1.3:  # Low ratio = more combustion sources
+            adjustments['construction'] -= 10
+            adjustments['traffic'] += 5
+            adjustments['industry'] += 5
+
+        # High PM2.5 with low other pollutants suggests agricultural burning
+        if pollutants['pm25'] > 100 and pollutants['no2'] < 30 and pollutants['so2'] < 10:
+            adjustments['agriculture'] += 25
+            adjustments['traffic'] -= 10
+            adjustments['industry'] -= 10
+            adjustments['construction'] -= 5
+
+    def _get_weather_conditions(self, station_name: str) -> Dict[str, float]:
+        """Get current weather conditions (mock for now, would use OpenWeather API)"""
+        import random
+        random.seed(hash(station_name + str(datetime.now().date())) % 1000)
+
+        # Generate realistic Delhi weather data
+        month = datetime.now().month
+
+        # Temperature varies by season
+        if 12 <= month <= 2:  # Winter
+            temp = 15 + random.uniform(-5, 10)
+        elif 3 <= month <= 5:  # Summer
+            temp = 30 + random.uniform(-5, 15)
+        elif 6 <= month <= 9:  # Monsoon
+            temp = 25 + random.uniform(-5, 8)
+        else:  # Post-monsoon
+            temp = 22 + random.uniform(-3, 8)
+
+        # Wind speed and humidity
+        wind_speed = 3 + random.uniform(0, 8)  # 3-11 km/h typical for Delhi
+        humidity = 45 + random.uniform(-15, 35)  # 30-80% range
+
+        return {
+            'temperature': temp,
+            'wind_speed': wind_speed,
+            'humidity': max(20, min(90, humidity))
+        }
+
+    def _apply_weather_adjustments(self, weather: Dict[str, float]) -> Dict[str, float]:
+        """Apply weather-based adjustments to source attribution"""
+        adjustments = {'traffic': 0, 'industry': 0, 'construction': 0, 'agriculture': 0, 'others': 0}
+
+        # Wind speed effects
+        wind_speed = weather['wind_speed']
+        if wind_speed < 2:  # Very low wind - local sources dominate
+            adjustments['traffic'] += 10
+            adjustments['industry'] += 8
+            adjustments['agriculture'] -= 15  # Regional source reduces
+            adjustments['construction'] += 5
+        elif wind_speed > 8:  # High wind - dispersion, regional sources
+            adjustments['traffic'] -= 8
+            adjustments['industry'] -= 5
+            adjustments['agriculture'] += 10  # More regional transport
+            adjustments['construction'] -= 5
+
+        # Temperature effects
+        temp = weather['temperature']
+        if temp > 35:  # Very hot - more dust, less construction activity
+            adjustments['construction'] -= 10
+            adjustments['others'] += 8  # Dust storms
+        elif temp < 10:  # Very cold - more heating/burning
+            adjustments['agriculture'] += 12  # More biomass burning for warmth
+            adjustments['industry'] += 5  # More heating
+
+        # Humidity effects
+        humidity = weather['humidity']
+        if humidity > 70:  # High humidity - particles settle, less construction dust
+            adjustments['construction'] -= 8
+            adjustments['traffic'] += 5
+        elif humidity < 30:  # Low humidity - more dust
+            adjustments['construction'] += 12
+            adjustments['others'] += 5
+
+        return adjustments
+
     def attribute_sources(self, station_name: str, current_aqi: Optional[float] = None) -> Dict[str, float]:
-        """Attribute current pollution to different sources"""
+        """Attribute current pollution to different sources using smart inference"""
         if not self.is_trained:
             raise ValueError("Attribution model not trained")
 
-        # Get base attribution based on time and location patterns
+        # Get base attribution based on location patterns
         now = datetime.now()
         hour = now.hour
 
         # Location-based base attribution (station-specific patterns)
         base_attribution = self._get_location_based_attribution(station_name.lower())
-
         logger.info(f"Base attribution for {station_name}: {base_attribution}")
 
-        # Time-based adjustments
+        # Get current pollutant data and analyze ratios
+        pollutants = self._get_pollutant_data(station_name)
+        pollutant_adjustments = self._analyze_pollutant_ratios(pollutants)
+        logger.info(f"Pollutant ratios for {station_name}: NO2/PM2.5={pollutants['no2']/(pollutants['pm25']+1):.2f}, PM10/PM2.5={pollutants['pm10']/(pollutants['pm25']+1):.2f}, SO2={pollutants['so2']:.1f}")
+        logger.info(f"Pollutant-based adjustments: {pollutant_adjustments}")
+
+        # Get weather conditions and apply weather adjustments
+        weather = self._get_weather_conditions(station_name)
+        weather_adjustments = self._apply_weather_adjustments(weather)
+        logger.info(f"Weather conditions for {station_name}: temp={weather['temperature']:.1f}°C, wind={weather['wind_speed']:.1f}km/h, humidity={weather['humidity']:.0f}%")
+        logger.info(f"Weather-based adjustments: {weather_adjustments}")
+
+        # Apply all adjustments to base attribution
+        for source in base_attribution:
+            base_attribution[source] += pollutant_adjustments[source] + weather_adjustments[source]
+
+        # Time-based adjustments (enhanced)
         if 7 <= hour <= 10 or 17 <= hour <= 20:  # Rush hours
             base_attribution['traffic'] += 15
             base_attribution['industry'] -= 5
             base_attribution['construction'] -= 10
+            logger.info(f"Rush hour adjustment applied (hour {hour})")
 
-        if 22 <= hour or hour <= 6:  # Night time
+        elif 22 <= hour or hour <= 6:  # Night time
             base_attribution['traffic'] -= 10
-            base_attribution['industry'] += 5
+            base_attribution['industry'] += 8
             base_attribution['construction'] -= 15
-            base_attribution['agriculture'] += 20  # Stubble burning at night
+            base_attribution['agriculture'] += 17  # Stubble burning at night
+            logger.info(f"Night time adjustment applied (hour {hour})")
 
-        # Seasonal adjustments (mock)
-        if 10 <= now.month <= 2:  # Winter - stubble burning season
-            base_attribution['agriculture'] += 20
+        elif 10 <= hour <= 16:  # Day time construction peak
+            base_attribution['construction'] += 10
             base_attribution['traffic'] -= 5
-            base_attribution['industry'] -= 10
-            base_attribution['others'] -= 5
+            logger.info(f"Daytime construction adjustment applied (hour {hour})")
 
-        # Normalize to 100%
+        # Seasonal adjustments (enhanced)
+        month = now.month
+        if 10 <= month <= 2:  # Winter - stubble burning season
+            base_attribution['agriculture'] += 20
+            base_attribution['traffic'] -= 8
+            base_attribution['industry'] -= 7
+            base_attribution['others'] -= 5
+            logger.info(f"Winter/stubble burning season adjustment applied (month {month})")
+
+        elif 3 <= month <= 5:  # Summer - more dust/construction
+            base_attribution['construction'] += 10
+            base_attribution['agriculture'] -= 10
+            logger.info(f"Summer dust season adjustment applied (month {month})")
+
+        # Weekend adjustments
+        weekday = now.weekday()
+        if weekday >= 5:  # Weekend (Saturday=5, Sunday=6)
+            base_attribution['construction'] -= 20
+            base_attribution['industry'] -= 10
+            base_attribution['traffic'] -= 5
+            base_attribution['others'] += 35  # Compensate for reduced activity
+            logger.info(f"Weekend adjustment applied (weekday {weekday})")
+
+        # Ensure no negative values and normalize to 100%
+        for source in base_attribution:
+            base_attribution[source] = max(5, base_attribution[source])  # Minimum 5% for any source
+
         total = sum(base_attribution.values())
         for source in base_attribution:
             base_attribution[source] = round((base_attribution[source] / total) * 100, 1)
 
+        logger.info(f"Final attribution for {station_name}: {base_attribution}")
         return base_attribution
 
 # Initialize ML models
