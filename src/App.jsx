@@ -21,28 +21,17 @@ function App() {
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
-    console.log("🔍 Loading user from localStorage:", stored);
-    if (stored) {
-      const parsedUser = JSON.parse(stored);
-      console.log("🔍 Parsed user from localStorage:", parsedUser);
-      console.log("🔍 Parsed user role:", parsedUser?.role);
-      setUser(parsedUser);
-    }
+    if (stored) setUser(JSON.parse(stored));
   }, []);
 
   const handleAuthSuccess = (userData) => {
-    console.log("🔍 App handleAuthSuccess received user:", userData);
-    console.log("🔍 User role:", userData?.role);
-
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
 
     // Redirect admin users to admin panel, regular users to dashboard
     if (userData.role === 'admin') {
-      console.log("🔍 Redirecting admin to /admin");
       navigate('/admin');
     } else {
-      console.log("🔍 Redirecting user to /dashboard");
       navigate('/dashboard');
     }
   };
@@ -59,12 +48,8 @@ function App() {
   };
 
   const AdminRoute = ({ children }) => {
-    console.log("🔍 AdminRoute - Current user:", user);
-    console.log("🔍 AdminRoute - User role:", user?.role);
-
     if (!user) return <Navigate to="/login" replace />;
     if (user.role !== 'admin') {
-      console.log("🔍 AdminRoute - User is not admin, showing access denied");
       return (
         <AppLayout>
           <div className="min-h-[60vh] flex items-center justify-center">
@@ -85,7 +70,6 @@ function App() {
         </AppLayout>
       );
     }
-    console.log("🔍 AdminRoute - User is admin, rendering children");
     return children;
   };
 
@@ -101,11 +85,11 @@ function App() {
       <Routes>
         <Route
           path="/login"
-          element={user ? <Navigate to="/dashboard" replace /> : <Login onSuccess={handleAuthSuccess} />}
+          element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> : <Login onSuccess={handleAuthSuccess} />}
         />
         <Route
           path="/signup"
-          element={user ? <Navigate to="/dashboard" replace /> : <Signup onSuccess={handleAuthSuccess} />}
+          element={user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace /> : <Signup onSuccess={handleAuthSuccess} />}
         />
 
         <Route
