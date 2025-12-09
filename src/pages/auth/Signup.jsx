@@ -74,16 +74,21 @@ const Signup = ({ onSuccess }) => {
           </div>
 
           <div>
-            <label>Role</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Account Type</label>
             <select
               className="input mt-1"
               name="role"
               value={form.role}
               onChange={handleChange}
             >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
+              <option value="user">👤 User Account</option>
+              <option value="admin">🛡️ Administrator Account</option>
             </select>
+            {form.role === 'admin' && (
+              <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                ⚠️ Admin accounts have elevated privileges for system management
+              </p>
+            )}
           </div>
 
           <button className="btn-primary w-full mt-2" disabled={loading}>

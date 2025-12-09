@@ -14,7 +14,7 @@ const Login = ({ onSuccess }) => {
     setLoading(true);
 
     try {
-      const payload = await authService.login(form.email, form.password);
+      const payload = await authService.login(form.email, form.password, form.role);
       onSuccess(payload.user);
       toast.success("Logged in");
     } catch {
@@ -52,6 +52,24 @@ const Login = ({ onSuccess }) => {
               value={form.password}
               onChange={handleChange}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Login as</label>
+            <select
+              className="input mt-1"
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+            >
+              <option value="user">👤 User</option>
+              <option value="admin">🛡️ Administrator</option>
+            </select>
+            {form.role === 'admin' && (
+              <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                ⚠️ Admin access provides elevated privileges including policy management
+              </p>
+            )}
           </div>
 
           <button className="btn-primary w-full mt-2" disabled={loading}>

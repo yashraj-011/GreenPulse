@@ -102,12 +102,12 @@ export const authService = {
    * - sign in to Firebase
    * - exchange idToken with backend
    */
-  login: async (email, password) => {
+  login: async (email, password, role = "user") => {
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await getIdToken(cred.user, true);
 
-      const payload = await exchangeFirebaseToken(idToken);
+      const payload = await exchangeFirebaseToken(idToken, role);
       if (payload?.token) localStorage.setItem("backend_token", payload.token);
       return payload;
     } catch (err) {

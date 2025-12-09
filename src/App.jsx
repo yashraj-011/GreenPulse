@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import SafeRoutes from './pages/SafeRoutes';
 import Community from './pages/Community';
 import PolicyDashboard from './pages/PolicyDashboard';
+import AdminPanel from './pages/AdminPanel';
 import Profile from "./components/Profile";
 
 
@@ -26,7 +27,13 @@ function App() {
   const handleAuthSuccess = (userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
-    navigate('/dashboard');
+
+    // Redirect admin users to admin panel, regular users to dashboard
+    if (userData.role === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const handleLogout = () => {
@@ -37,6 +44,32 @@ function App() {
 
   const ProtectedRoute = ({ children }) => {
     if (!user) return <Navigate to="/login" replace />;
+    return children;
+  };
+
+  const AdminRoute = ({ children }) => {
+    if (!user) return <Navigate to="/login" replace />;
+    if (user.role !== 'admin') {
+      return (
+        <AppLayout>
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🔒</div>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-2">Admin Access Required</h1>
+              <p className="text-slate-600 dark:text-slate-300 mb-4">
+                You need admin privileges to access this page.
+              </p>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="btn-primary"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>
+        </AppLayout>
+      );
+    }
     return children;
   };
 
@@ -90,13 +123,23 @@ function App() {
           }
         />
         <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AppLayout>
+                <AdminPanel />
+              </AppLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
           path="/policy"
           element={
-            <ProtectedRoute>
+            <AdminRoute>
               <AppLayout>
                 <PolicyDashboard />
               </AppLayout>
-            </ProtectedRoute>
+            </AdminRoute>
           }
         />
         <Route
@@ -110,8 +153,28 @@ function App() {
           }
         />
 
-        <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={
+                user
+                  ? (user.role === 'admin' ? '/admin' : '/dashboard')
+                  : '/login'
+              }
+              replace
+            />
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to={user?.role === 'admin' ? '/admin' : '/dashboard'}
+              replace
+            />
+          }
+        />
       </Routes>
     </ThemeProvider>
   );
