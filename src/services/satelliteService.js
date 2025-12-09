@@ -147,22 +147,42 @@ export const satelliteService = {
   },
 
   /**
-   * Comprehensive satellite analysis combining all sources
+   * Comprehensive satellite analysis combining all sources with real ML data
    */
   getSatelliteAnalysis: async () => {
     try {
+      // Try to get real pollution source data from ML server
+      let realSourceData = null;
+      try {
+        const { aqiService } = await import('./aqiService.js');
+        realSourceData = await aqiService.getSources('Delhi Central'); // Use Delhi Central as representative
+      } catch (error) {
+        console.warn('Failed to get real source data for satellite analysis:', error);
+      }
+
       const [fires, airQuality, trends] = await Promise.all([
         satelliteService.getFireHotspots(1),
         satelliteService.getAirQualityFromSatellite(),
         satelliteService.getPollutionTrends(7)
       ]);
 
-      // Analyze correlations and generate insights
+      // Enhanced analysis with real ML data if available
+      let fireContribution = 0;
+      if (realSourceData && realSourceData.analysis_details) {
+        // Use real ML analysis if available
+        fireContribution = extractFireContribution(realSourceData);
+        console.log('🛰️ Using real ML data for satellite analysis');
+      } else {
+        // Fallback to mock calculation
+        fireContribution = calculateFireContribution(fires.fires, airQuality.data);
+        console.log('🛰️ Using mock data for satellite analysis');
+      }
+
       const analysis = {
-        fire_contribution: calculateFireContribution(fires.fires, airQuality.data),
+        fire_contribution: fireContribution,
         regional_hotspots: identifyRegionalHotspots(airQuality.data),
         trend_analysis: analyzeTrends(trends.trends),
-        recommendations: generateRecommendations(fires.fires, airQuality.data, trends.trends)
+        recommendations: generateRecommendations(fires.fires, airQuality.data, trends.trends, realSourceData)
       };
 
       return {
@@ -171,7 +191,8 @@ export const satelliteService = {
         sources: {
           fires: fires.source,
           air_quality: airQuality.source,
-          trends: trends.source
+          trends: trends.source,
+          ml_integration: realSourceData ? 'Connected to ML server' : 'Using mock data'
         },
         timestamp: new Date().toISOString()
       };
@@ -220,19 +241,58 @@ function generateMockFireData() {
   const fires = [];
   const { DELHI_BOUNDS } = SATELLITE_CONFIG;
 
-  // Generate 5-15 random fire hotspots in Delhi-NCR area
-  const fireCount = 5 + Math.floor(Math.random() * 10);
+  // Generate realistic fire count based on current season and time
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-12
+  const hour = now.getHours();
+
+  // More fires during stubble burning season (Oct-Dec) and at night
+  let baseFireCount = 5;
+  if (month >= 10 && month <= 12) {
+    baseFireCount = 15; // Stubble burning season
+  }
+  if (hour >= 18 || hour <= 6) {
+    baseFireCount += 5; // More burning at night
+  }
+
+  const fireCount = baseFireCount + Math.floor(Math.random() * 10);
 
   for (let i = 0; i < fireCount; i++) {
+    // Bias fires towards agricultural areas (outer Delhi)
+    const isAgricultural = Math.random() < 0.7;
+    let lat, lng;
+
+    if (isAgricultural) {
+      // Place in outer areas (likely agricultural)
+      const side = Math.floor(Math.random() * 4); // 0: north, 1: south, 2: east, 3: west
+      switch (side) {
+        case 0: // North (Haryana border)
+          lat = DELHI_BOUNDS.north - Math.random() * 0.1;
+          lng = DELHI_BOUNDS.west + Math.random() * (DELHI_BOUNDS.east - DELHI_BOUNDS.west);
+          break;
+        case 1: // South (rural areas)
+          lat = DELHI_BOUNDS.south + Math.random() * 0.1;
+          lng = DELHI_BOUNDS.west + Math.random() * (DELHI_BOUNDS.east - DELHI_BOUNDS.west);
+          break;
+        default: // East/West borders
+          lat = DELHI_BOUNDS.south + Math.random() * (DELHI_BOUNDS.north - DELHI_BOUNDS.south);
+          lng = side === 2 ? DELHI_BOUNDS.east - Math.random() * 0.1 : DELHI_BOUNDS.west + Math.random() * 0.1;
+      }
+    } else {
+      // Random location (urban fires)
+      lat = DELHI_BOUNDS.south + Math.random() * (DELHI_BOUNDS.north - DELHI_BOUNDS.south);
+      lng = DELHI_BOUNDS.west + Math.random() * (DELHI_BOUNDS.east - DELHI_BOUNDS.west);
+    }
+
     fires.push({
-      latitude: DELHI_BOUNDS.south + Math.random() * (DELHI_BOUNDS.north - DELHI_BOUNDS.south),
-      longitude: DELHI_BOUNDS.west + Math.random() * (DELHI_BOUNDS.east - DELHI_BOUNDS.west),
-      brightness: 300 + Math.random() * 100,
+      latitude: lat,
+      longitude: lng,
+      brightness: 300 + Math.random() * 150,
       confidence: 70 + Math.floor(Math.random() * 30),
-      acq_date: new Date().toISOString().split('T')[0],
+      acq_date: now.toISOString().split('T')[0],
       acq_time: String(Math.floor(Math.random() * 2400)).padStart(4, '0'),
       satellite: ['MODIS_T', 'VIIRS_NPP'][Math.floor(Math.random() * 2)],
-      frp: 10 + Math.random() * 50 // Fire Radiative Power
+      frp: isAgricultural ? 30 + Math.random() * 70 : 10 + Math.random() * 30 // Higher FRP for agricultural fires
     });
   }
 
@@ -299,6 +359,23 @@ function generateMockTrends(days) {
   }
 
   return trends.reverse(); // Most recent first
+}
+
+function extractFireContribution(realSourceData) {
+  // Extract fire/stubble contribution from ML source data
+  if (realSourceData && Array.isArray(realSourceData)) {
+    const stubbleSource = realSourceData.find(source =>
+      source.name.toLowerCase().includes('stubble') ||
+      source.name.toLowerCase().includes('agriculture')
+    );
+
+    if (stubbleSource) {
+      return stubbleSource.value; // This is the percentage from ML analysis
+    }
+  }
+
+  // If no stubble source found, return 0
+  return 0;
 }
 
 function calculateFireContribution(fires, aqData) {
@@ -387,44 +464,96 @@ function calculateFireTrendCorrelation(trends) {
   return denominator !== 0 ? numerator / denominator : 0;
 }
 
-function generateRecommendations(fires, aqData, trends) {
+function generateRecommendations(fires, aqData, trends, realSourceData = null) {
   const recommendations = [];
 
-  // Fire-based recommendations
-  if (fires.length > 10) {
-    recommendations.push({
-      type: 'fire_alert',
-      priority: 'high',
-      message: `${fires.length} active fire hotspots detected. Implement immediate stubble burning controls.`
-    });
+  // Enhanced recommendations using real ML data
+  if (realSourceData && realSourceData.analysis_details) {
+    const { pollutant_data, weather_data, analysis_metadata } = realSourceData.analysis_details;
+
+    // PM2.5 based recommendations
+    if (pollutant_data && pollutant_data.pm25 > 150) {
+      recommendations.push({
+        type: 'air_quality_alert',
+        priority: 'high',
+        message: `Critical PM2.5 levels detected (${Math.round(pollutant_data.pm25)} μg/m³). Implement GRAP Stage 4 measures immediately.`
+      });
+    }
+
+    // Traffic recommendations based on NO2/PM2.5 ratio
+    if (analysis_metadata && analysis_metadata.no2_pm25_ratio > 0.5) {
+      recommendations.push({
+        type: 'traffic_control',
+        priority: 'medium',
+        message: `High NO₂/PM2.5 ratio (${analysis_metadata.no2_pm25_ratio.toFixed(2)}) indicates significant traffic pollution. Implement odd-even scheme.`
+      });
+    }
+
+    // Construction dust recommendations based on PM10/PM2.5 ratio
+    if (analysis_metadata && analysis_metadata.pm10_pm25_ratio > 1.5) {
+      recommendations.push({
+        type: 'dust_control',
+        priority: 'medium',
+        message: `High PM10/PM2.5 ratio (${analysis_metadata.pm10_pm25_ratio.toFixed(2)}) suggests construction dust. Enhance anti-dust measures.`
+      });
+    }
+
+    // Weather-based recommendations
+    if (weather_data && weather_data.wind_speed < 5) {
+      recommendations.push({
+        type: 'weather_alert',
+        priority: 'medium',
+        message: `Low wind speed (${Math.round(weather_data.wind_speed)} km/h) will trap pollutants. Reduce emission sources.`
+      });
+    }
+  } else {
+    // Fallback to original mock-based recommendations
+
+    // Fire-based recommendations
+    if (fires.length > 10) {
+      recommendations.push({
+        type: 'fire_alert',
+        priority: 'high',
+        message: `${fires.length} active fire hotspots detected. Implement immediate stubble burning controls.`
+      });
+    }
+
+    // Air quality hotspot recommendations
+    const criticalPixels = aqData.filter(p => p.pm25_surface > 200);
+    if (criticalPixels.length > 5) {
+      recommendations.push({
+        type: 'pollution_hotspot',
+        priority: 'high',
+        message: `${criticalPixels.length} areas with critical pollution levels. Deploy emergency response measures.`
+      });
+    }
+
+    // Trend-based recommendations
+    const trendAnalysis = analyzeTrends(trends);
+    if (trendAnalysis.trend === 'worsening' && trendAnalysis.change_percent > 15) {
+      recommendations.push({
+        type: 'trend_alert',
+        priority: 'medium',
+        message: `Air quality worsening by ${trendAnalysis.change_percent}% this week. Activate preventive measures.`
+      });
+    }
+
+    // Fire correlation recommendations
+    if (trendAnalysis.fire_correlation > 0.7) {
+      recommendations.push({
+        type: 'fire_correlation',
+        priority: 'medium',
+        message: 'Strong correlation between fires and pollution detected. Focus on agricultural burning prevention.'
+      });
+    }
   }
 
-  // Air quality hotspot recommendations
-  const criticalPixels = aqData.filter(p => p.pm25_surface > 200);
-  if (criticalPixels.length > 5) {
+  // Ensure we have at least one recommendation
+  if (recommendations.length === 0) {
     recommendations.push({
-      type: 'pollution_hotspot',
-      priority: 'high',
-      message: `${criticalPixels.length} areas with critical pollution levels. Deploy emergency response measures.`
-    });
-  }
-
-  // Trend-based recommendations
-  const trendAnalysis = analyzeTrends(trends);
-  if (trendAnalysis.trend === 'worsening' && trendAnalysis.change_percent > 15) {
-    recommendations.push({
-      type: 'trend_alert',
-      priority: 'medium',
-      message: `Air quality worsening by ${trendAnalysis.change_percent}% this week. Activate preventive measures.`
-    });
-  }
-
-  // Fire correlation recommendations
-  if (trendAnalysis.fire_correlation > 0.7) {
-    recommendations.push({
-      type: 'fire_correlation',
-      priority: 'medium',
-      message: 'Strong correlation between fires and pollution detected. Focus on agricultural burning prevention.'
+      type: 'monitoring',
+      priority: 'low',
+      message: 'Continue monitoring air quality conditions and maintain current pollution control measures.'
     });
   }
 

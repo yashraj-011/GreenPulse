@@ -21,16 +21,28 @@ export async function buildSourceBreakdown(realtime, prisma, stationName) {
     );
 
     if (response.data?.success && response.data?.sources) {
-      const sources = response.data.sources;
-      console.log(`✅ ML server source attribution: ${JSON.stringify(sources)}`);
+      const result = response.data;
+      console.log(`✅ ML server source attribution: ${JSON.stringify(result.sources)}`);
+      console.log(`📊 Pollutant data: PM2.5=${result.pollutant_data?.pm25}, PM10=${result.pollutant_data?.pm10}, NO2=${result.pollutant_data?.no2}, SO2=${result.pollutant_data?.so2}`);
+      console.log(`🌤️ Weather data: Temp=${result.weather_data?.temperature}°C, Wind=${result.weather_data?.wind_speed}km/h`);
+      console.log(`🔬 Analysis ratios: NO2/PM2.5=${result.analysis_metadata?.no2_pm25_ratio?.toFixed(2)}, PM10/PM2.5=${result.analysis_metadata?.pm10_pm25_ratio?.toFixed(2)}`);
 
-      // Map ML server response to frontend format
+      // Map ML server response to frontend format with detailed data
       return {
-        traffic: sources.traffic || 0,
-        stubble: sources.agriculture || 0,  // Map agriculture -> stubble
-        dust: sources.construction || 0,    // Map construction -> dust
-        industry: sources.industry || 0,
-        garbage: sources.others || 0        // Map others -> garbage
+        traffic: result.sources.traffic || 0,
+        stubble: result.sources.agriculture || 0,  // Map agriculture -> stubble
+        dust: result.sources.construction || 0,    // Map construction -> dust
+        industry: result.sources.industry || 0,
+        garbage: result.sources.others || 0,       // Map others -> garbage
+
+        // Include detailed analysis data for transparency
+        analysis_details: {
+          pollutant_data: result.pollutant_data,
+          weather_data: result.weather_data,
+          analysis_metadata: result.analysis_metadata,
+          confidence: result.confidence,
+          method: result.attribution_method
+        }
       };
     }
 

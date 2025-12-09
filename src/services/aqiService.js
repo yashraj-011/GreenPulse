@@ -231,7 +231,19 @@ export const aqiService = {
             value: Math.round(parseFloat(value) || 0)
           }));
 
+          // Include analysis details if available from ML server
+          if (mlResponse.data.pollutant_data || mlResponse.data.weather_data || mlResponse.data.analysis_metadata) {
+            result.analysis_details = {
+              pollutant_data: mlResponse.data.pollutant_data,
+              weather_data: mlResponse.data.weather_data,
+              analysis_metadata: mlResponse.data.analysis_metadata,
+              confidence: mlResponse.data.confidence,
+              method: mlResponse.data.attribution_method || mlResponse.data.method
+            };
+          }
+
           console.log(`🤖 Using ML-powered source attribution for ${stationName}:`, result);
+          console.log(`📊 Analysis details included:`, !!result.analysis_details);
           return result;
         }
       } catch (mlError) {
@@ -252,7 +264,13 @@ export const aqiService = {
             value: Math.round(parseFloat(value) || 0)
           }));
 
+          // Include analysis details if available from backend
+          if (sources.analysis_details) {
+            result.analysis_details = sources.analysis_details;
+          }
+
           console.log(`✅ Using backend source data for ${stationName}:`, result);
+          console.log(`📊 Backend analysis details included:`, !!result.analysis_details);
           return result;
         }
       }

@@ -15,6 +15,8 @@ const COLORS = ["#EF4444", "#F59E0B", "#6366F1", "#10B981", "#94A3B8"]; // red, 
 export default function SourceDistribution({ data: propData, selectedStation }) {
   const [data, setData] = useState(propData || []);
   const [isUsingFallback, setIsUsingFallback] = useState(false);
+  const [analysisDetails, setAnalysisDetails] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -35,6 +37,12 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
             console.log(`✅ Got real sources data for ${stationName}:`, resp);
             setData(resp);
             setIsUsingFallback(false);
+
+            // Check if we have detailed analysis data from the ML server
+            if (resp.analysis_details) {
+              console.log(`📊 Analysis details available:`, resp.analysis_details);
+              setAnalysisDetails(resp.analysis_details);
+            }
             return;
           }
         }
@@ -188,6 +196,94 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
               </span>
             )}
           </p>
+
+          {/* Show detailed analysis data if available */}
+          {analysisDetails && !isUsingFallback && (
+            <div className="mt-4 border-t pt-4 border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setShowDetails(!showDetails)}
+                className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 transition-colors"
+              >
+                <span>{showDetails ? '▼' : '▶'}</span>
+                Analysis Details ({analysisDetails.confidence && `${Math.round(analysisDetails.confidence * 100)}% confidence`})
+              </button>
+
+              {showDetails && (
+                <div className="mt-3 space-y-3 text-xs">
+                  {/* Pollutant Data */}
+                  {analysisDetails.pollutant_data && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 dark:text-slate-200 mb-2">Real-time Pollutant Levels</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded">
+                          <div className="font-medium text-slate-600 dark:text-slate-300">PM2.5</div>
+                          <div className="text-slate-800 dark:text-slate-100">{Math.round(analysisDetails.pollutant_data.pm25)} μg/m³</div>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded">
+                          <div className="font-medium text-slate-600 dark:text-slate-300">PM10</div>
+                          <div className="text-slate-800 dark:text-slate-100">{Math.round(analysisDetails.pollutant_data.pm10)} μg/m³</div>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded">
+                          <div className="font-medium text-slate-600 dark:text-slate-300">NO₂</div>
+                          <div className="text-slate-800 dark:text-slate-100">{Math.round(analysisDetails.pollutant_data.no2)} μg/m³</div>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded">
+                          <div className="font-medium text-slate-600 dark:text-slate-300">SO₂</div>
+                          <div className="text-slate-800 dark:text-slate-100">{Math.round(analysisDetails.pollutant_data.so2)} μg/m³</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Weather Data */}
+                  {analysisDetails.weather_data && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 dark:text-slate-200 mb-2">Weather Conditions</h4>
+                      <div className="flex gap-4 text-xs">
+                        <span className="bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
+                          🌡️ {Math.round(analysisDetails.weather_data.temperature)}°C
+                        </span>
+                        <span className="bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
+                          💨 {Math.round(analysisDetails.weather_data.wind_speed)} km/h
+                        </span>
+                        <span className="bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
+                          💧 {Math.round(analysisDetails.weather_data.humidity)}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Analysis Ratios */}
+                  {analysisDetails.analysis_metadata && (
+                    <div>
+                      <h4 className="font-medium text-slate-700 dark:text-slate-200 mb-2">ML Analysis Ratios</h4>
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-600 dark:text-slate-300">NO₂/PM2.5 (Traffic indicator)</span>
+                          <span className="font-mono">{analysisDetails.analysis_metadata.no2_pm25_ratio?.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600 dark:text-slate-300">PM10/PM2.5 (Dust indicator)</span>
+                          <span className="font-mono">{analysisDetails.analysis_metadata.pm10_pm25_ratio?.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600 dark:text-slate-300">Analysis time</span>
+                          <span className="font-mono">{analysisDetails.analysis_metadata.time_category}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Method */}
+                  {analysisDetails.method && (
+                    <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                      Method: {analysisDetails.method}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
