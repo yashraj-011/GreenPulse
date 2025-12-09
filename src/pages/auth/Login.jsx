@@ -14,10 +14,14 @@ const Login = ({ onSuccess }) => {
     setLoading(true);
 
     try {
+      console.log("🔍 Login form data:", { email: form.email, role: form.role });
       const payload = await authService.login(form.email, form.password, form.role);
+      console.log("🔍 Login payload received:", payload);
+      console.log("🔍 User object from payload:", payload.user);
       onSuccess(payload.user);
       toast.success("Logged in");
-    } catch {
+    } catch (error) {
+      console.error("🔍 Login error:", error);
       toast.error("Login failed");
     } finally {
       setLoading(false);
