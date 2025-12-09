@@ -16,8 +16,6 @@ import {
   Line
 } from 'recharts';
 import {
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -26,7 +24,6 @@ import {
   Car,
   Factory,
   Leaf,
-  Brain,
   Calendar
 } from 'lucide-react';
 
@@ -128,15 +125,6 @@ const WEEKLY_TRENDS = [
   { day: 'Sun', aqi: 189 }
 ];
 
-// AI recommendations pool
-const AI_RECOMMENDATIONS = [
-  "High vehicular traffic expected tomorrow morning. Consider implementing temporary heavy vehicle restrictions.",
-  "Stubble burning detected in satellite imagery. Deploy mobile monitoring units to affected zones.",
-  "Construction dust levels elevated in Dwarka sector. Recommend increased water spraying frequency.",
-  "Industrial emissions spike predicted for next week. Schedule preemptive inspections in Okhla industrial area.",
-  "Weather conditions favorable for pollution dispersal in 48 hours. Plan outdoor activities accordingly.",
-  "PM2.5 levels critically high in residential zones. Issue health advisory for sensitive groups."
-];
 
 const POLICY_TYPES = [
   { name: "Traffic", icon: Car, color: "bg-blue-500" },
@@ -150,7 +138,6 @@ export default function PolicyDashboard() {
   const [selectedType, setSelectedType] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [timeView, setTimeView] = useState('weekly');
-  const [recommendation] = useState(AI_RECOMMENDATIONS[Math.floor(Math.random() * AI_RECOMMENDATIONS.length)]);
 
   // Filter interventions
   const filteredInterventions = interventions.filter(intervention => {
@@ -215,32 +202,6 @@ export default function PolicyDashboard() {
           </p>
         </div>
 
-        {/* Enhanced Key Metrics */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border-l-4 border-emerald-600">
-            <Building2 className="w-8 h-8 text-emerald-600 mb-3" />
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1">Active Interventions</p>
-            <p className="text-4xl font-bold text-slate-900 dark:text-slate-50">{activeInterventions}</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border-l-4 border-blue-600">
-            <TrendingDown className="w-8 h-8 text-blue-600 mb-3" />
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1">Avg Reduction</p>
-            <p className="text-4xl font-bold text-slate-900 dark:text-slate-50">{avgReduction}%</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border-l-4 border-violet-600">
-            <CheckCircle className="w-8 h-8 text-violet-600 mb-3" />
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1">Compliance Rate</p>
-            <p className="text-4xl font-bold text-slate-900 dark:text-slate-50">78%</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border-l-4 border-orange-600">
-            <Brain className="w-8 h-8 text-orange-600 mb-3" />
-            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase mb-1">AI Alerts</p>
-            <p className="text-4xl font-bold text-slate-900 dark:text-slate-50">12</p>
-          </div>
-        </div>
 
         {/* Time View Toggle */}
         <div className="flex gap-3 mb-8">
@@ -457,64 +418,7 @@ export default function PolicyDashboard() {
           )}
         </div>
 
-        {/* AI Recommendations and Real-Time Analytics */}
-        <div className="grid md:grid-cols-2 gap-8 mb-8">
-          <div className="bg-gradient-to-br from-emerald-600 to-teal-600 p-8 rounded-2xl shadow-lg text-white">
-            <div className="flex items-start gap-4">
-              <div className="bg-white/20 p-3 rounded-xl">
-                <Brain className="w-8 h-8" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold mb-3">AI Recommendation</h3>
-                <p className="text-emerald-100 text-base leading-relaxed mb-4">
-                  {recommendation}
-                </p>
-                <button className="px-6 py-2 bg-white text-emerald-600 rounded-lg font-semibold hover:bg-emerald-50 transition-colors">
-                  Generate Report
-                </button>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-8 rounded-2xl shadow-lg text-white">
-            <h3 className="text-2xl font-bold mb-4">Real-Time Analytics</h3>
-            <div className="space-y-4">
-              <div className="bg-white/20 p-4 rounded-xl">
-                <p className="text-sm text-blue-100 mb-1">Monitoring Stations Active</p>
-                <p className="text-3xl font-bold">37/40</p>
-              </div>
-              <div className="bg-white/20 p-4 rounded-xl">
-                <p className="text-sm text-blue-100 mb-1">Industrial Inspections Today</p>
-                <p className="text-3xl font-bold">24</p>
-              </div>
-              <div className="bg-white/20 p-4 rounded-xl">
-                <p className="text-sm text-blue-100 mb-1">Violations Reported</p>
-                <p className="text-3xl font-bold">8</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Additional Investment & Compliance Info */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
-            Investment Summary
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(totalInvestment)}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-300">Total Investment</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{completedInterventions}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-300">Completed Projects</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{avgReduction}%</div>
-              <div className="text-sm text-slate-600 dark:text-slate-300">Average Effectiveness</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
