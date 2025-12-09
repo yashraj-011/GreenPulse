@@ -16,7 +16,7 @@ const _cache = { aqicnDetailed: null };
 const CACHE_TTL_MS =
   (process.env.AQICN_CACHE_MINUTES
     ? Number(process.env.AQICN_CACHE_MINUTES)
-    : 10) *
+    : 2) *  // Reduced from 10 to 2 minutes for fresher data
   60 *
   1000;
 
@@ -227,6 +227,15 @@ export async function buildFeatureVector(stationName = null) {
     stationInfo?.aqi ??
     aqicn.city_aqi ??
     0;
+
+  // Enhanced AQI debugging
+  console.log("📊 AQI Resolution Details:");
+  console.log("  - Requested station:", stationName);
+  console.log("  - AQICN matched station:", stationInfo?.name || "None");
+  console.log("  - Station AQI:", stationInfo?.aqi || "N/A");
+  console.log("  - City median AQI:", aqicn.city_aqi || "N/A");
+  console.log("  - Final AQI used:", exactAQI);
+  console.log("  - AQI source:", aqicn.source || "unknown");
 
   const rt = {
     pm25: stComp.pm25 ?? stComp.p2 ?? ow?.pm25 ?? null,
