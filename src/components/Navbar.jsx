@@ -18,11 +18,10 @@ const Navbar = ({ user, onLogout }) => {
 
   const getNavItems = () => {
     if (user?.role === 'admin') {
-      // Admin users see: Admin Panel, Policy Dashboard, Community (for report management), Profile
+      // Admin users see: Admin Panel, Policy Dashboard, Profile
       return [
         { id: 'admin', label: 'Admin Panel', path: '/admin', icon: Shield },
         { id: 'policy', label: 'Policy Dashboard', path: '/policy', icon: BarChart3 },
-        { id: 'community', label: 'Community Reports', path: '/community', icon: MessageCircle },
         { id: 'profile', label: 'Profile', path: '/profile', icon: User }
       ];
     } else {
