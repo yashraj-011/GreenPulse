@@ -169,13 +169,11 @@ export default function AQICard({ station, onSearch, suggestions = [], loading =
                   aria-label="Search location"
                   autoComplete="off"
                 />
-                {suggestions.length > 0 && (
-                  <ChevronDown
-                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                )}
+                <ChevronDown
+                  className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                    isOpen ? 'rotate-180' : ''
+                  }`}
+                />
 
                 {/* Custom Dropdown */}
                 {isOpen && filteredSuggestions.length > 0 && (

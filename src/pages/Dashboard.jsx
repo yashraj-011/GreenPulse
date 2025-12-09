@@ -234,27 +234,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stations list below */}
-        <div className="card mt-6 p-6">
-          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-50 mb-3">Monitoring Stations</h2>
-          <div className="grid md:grid-cols-3 gap-3 text-sm">
-            {stations.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setSelected(s)}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl border text-left ${
-                  selected?.id === s.id ? "bg-primary-50 dark:bg-primary-900 dark:bg-opacity-30 border-primary-200 dark:border-primary-700" : "bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-600"
-                }`}
-              >
-                <div>
-                  <p className="font-semibold text-slate-800 dark:text-slate-50">{s.name}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-300">{s.category}</p>
-                </div>
-                <span className="text-sm font-bold dark:text-slate-50">{s.aqi}</span>
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Delhi-NCR AQI Map */}
         <div className="mt-6">
