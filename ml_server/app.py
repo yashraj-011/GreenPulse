@@ -360,11 +360,33 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     debug = os.getenv("DEBUG", "True").lower() == "true"
 
+    print(f"🚀 Starting FastAPI server...")
+    print(f"Host: {host}")
+    print(f"Port: {port}")
+    print(f"Debug: {debug}")
+
     logger.info(f"Starting FastAPI server on {host}:{port}")
-    uvicorn.run(
-        "app:app" if not debug else app,
-        host=host,
-        port=port,
-        reload=debug,
-        log_level="info"
-    )
+
+    try:
+        if debug:
+            # Use string import for reload to work
+            uvicorn.run(
+                "app:app",
+                host=host,
+                port=port,
+                reload=True,
+                log_level="info"
+            )
+        else:
+            # Use app object for production
+            uvicorn.run(
+                app,
+                host=host,
+                port=port,
+                reload=False,
+                log_level="info"
+            )
+    except Exception as e:
+        print(f"❌ Server failed to start: {e}")
+        import traceback
+        traceback.print_exc()
