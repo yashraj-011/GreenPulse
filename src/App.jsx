@@ -116,9 +116,13 @@ function App() {
           path="/community"
           element={
             <ProtectedRoute>
-              <AppLayout>
-                <Community user={user} />
-              </AppLayout>
+              {user?.role === 'admin' ? (
+                <Navigate to="/admin" replace />
+              ) : (
+                <AppLayout>
+                  <Community user={user} />
+                </AppLayout>
+              )}
             </ProtectedRoute>
           }
         />
