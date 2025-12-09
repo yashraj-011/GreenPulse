@@ -1,21 +1,17 @@
 // src/pages/AdminPanel.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   BarChart3,
   Shield,
-  Settings,
   FileText,
-  Activity,
   CheckCircle,
   XCircle,
   Clock,
   AlertTriangle,
   User,
   MapPin,
-  Image as ImageIcon,
-  Eye,
-  Users
+  Eye
 } from 'lucide-react';
 
 // Use the same storage keys as Community component for data consistency
@@ -23,7 +19,6 @@ const LOCAL_PENDING_KEY = "community_pending_reports_v2";
 const LOCAL_INCIDENTS_KEY = "community_public_incidents_v2";
 
 export default function AdminPanel() {
-  const navigate = useNavigate();
 
   // Load reports from localStorage (same as Community component)
   const [pendingReports, setPendingReports] = useState(() => {
@@ -126,15 +121,6 @@ export default function AdminPanel() {
       color: "from-purple-500 to-purple-600",
       stats: `${verifiedCount} Reports`,
       onClick: () => document.getElementById('verified-reports')?.scrollIntoView({ behavior: 'smooth' })
-    },
-    {
-      title: "System Settings",
-      description: "Configure system settings and preferences",
-      icon: Settings,
-      path: "/admin/settings",
-      color: "from-gray-500 to-gray-600",
-      stats: "Settings",
-      disabled: true
     }
   ];
 
@@ -195,29 +181,9 @@ export default function AdminPanel() {
       </div>
 
       {/* Admin Modules */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {adminModules.map((module, index) => {
           const Icon = module.icon;
-          const isDisabled = module.disabled;
-
-          if (isDisabled) {
-            return (
-              <div key={index} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 opacity-60">
-                <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${module.color} flex items-center justify-center mb-4 opacity-60`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-2">
-                  {module.title}
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
-                  {module.description}
-                </p>
-                <div className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-1 rounded-full">
-                  Coming Soon
-                </div>
-              </div>
-            );
-          }
 
           if (module.onClick) {
             return (
