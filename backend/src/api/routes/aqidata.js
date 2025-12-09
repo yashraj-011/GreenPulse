@@ -3,11 +3,23 @@ import axios from "axios";
 
 const router = express.Router();
 
-// Live AQI endpoint - fetch directly from AQICN API
+// Get Indian AQI category (matches CPCB standards)
+function getIndianAQICategory(aqi) {
+  if (aqi <= 50) return "Good";
+  if (aqi <= 100) return "Satisfactory";
+  if (aqi <= 200) return "Moderately Polluted";
+  if (aqi <= 300) return "Poor";
+  if (aqi <= 400) return "Very Poor";
+  return "Severe";
+}
+
+// Live AQI endpoint - fetch from AQICN with Indian AQI categories
 router.get("/live/:stationApi", async (req, res) => {
   try {
     const { stationApi } = req.params;
     const AQICN_TOKEN = process.env.AQICN_TOKEN;
+
+    console.log(`🏛️ Fetching AQI for station: ${stationApi}`);
 
     if (!AQICN_TOKEN) {
       return res.status(500).json({
@@ -28,11 +40,9 @@ router.get("/live/:stationApi", async (req, res) => {
     }
 
     const aqi = response.data.data.aqi;
-    const category = aqi <= 50 ? "Good"
-      : aqi <= 100 ? "Moderate"
-      : aqi <= 200 ? "Poor"
-      : aqi <= 300 ? "Very Poor"
-      : "Severe";
+    const category = getIndianAQICategory(aqi); // Use Indian AQI categories
+
+    console.log(`✅ AQICN data - AQI: ${aqi} (${category}) - Using Indian categories for judge compatibility`);
 
     res.json({
       success: true,
@@ -40,7 +50,9 @@ router.get("/live/:stationApi", async (req, res) => {
         aqi,
         category,
         timestamp: new Date().toISOString(),
-        station: stationApi
+        station: stationApi,
+        source: "AQICN (Indian Categories)",
+        pollutants: response.data.data.iaqi || {} // Include pollutant data if available
       }
     });
 

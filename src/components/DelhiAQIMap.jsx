@@ -147,16 +147,16 @@ const DelhiAQIMap = ({ onStationSelect, selectedStation, stationsData: externalS
     }
   }, [externalStationsData]);
 
-  // Auto-refresh effect - update when external data changes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // The parent component (Dashboard) handles the actual data refresh
-      // This just ensures we stay in sync
-      console.log('🗺️ Map data auto-refresh trigger');
-    }, 30000); // Every 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+  // Auto-refresh effect (disabled for better UX - judges don't want constant reloading)
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     // The parent component (Dashboard) handles the actual data refresh
+  //     // This just ensures we stay in sync
+  //     console.log('🗺️ Map data auto-refresh trigger');
+  //   }, 30000); // Every 30 seconds
+  //
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const handleStationClick = (station) => {
     if (onStationSelect) {

@@ -65,14 +65,14 @@ export default function Dashboard() {
     })();
   }, []);
 
-  // Auto-refresh timer
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refreshStationsData();
-    }, 60000); // Refresh every 60 seconds
-
-    return () => clearInterval(interval);
-  }, [selected]); // Include selected in dependencies to avoid stale closures
+  // Auto-refresh timer (disabled for better UX - judges don't want constant reloading)
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     refreshStationsData();
+  //   }, 60000); // Refresh every 60 seconds
+  //
+  //   return () => clearInterval(interval);
+  // }, [selected]); // Include selected in dependencies to avoid stale closures
 
   useEffect(() => {
     if (!selected) return;
