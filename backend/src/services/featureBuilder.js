@@ -1,7 +1,7 @@
 // backend/src/services/featureBuilder.js
 
 import { getOpenWeatherPollution } from "./openweatherPollution.js";
-import { getAQICN } from "./aqicn.js";
+import { getAQICN, getStationAQI } from "./aqicn.js";
 // import { getAQICNDetailed } from "./aqicnDetailed.js"; // Disabled for original compatibility
 import { getRealtimeWeather } from "./realtimeWeather.js";
 import { getRealtimeFires } from "./realtimeFires.js";
@@ -148,27 +148,53 @@ export async function buildFeatureVector(stationName = null) {
   console.log(`📋 Using ${featureNames.length} features:`, featureNames.length > 10 ? 'Full feature set' : featureNames);
 
   // -------------------------------------------
-  // AQI DATA - Use Simple Method (Matching Original)
-  // Always use basic AQICN method for compatibility with original
+  // AQI DATA - Use Station-Specific Method (Fixed)
+  // Use same API endpoint as frontend for consistency
   // -------------------------------------------
   let aqicn = null;
+  let stationSpecificAqi = null;
 
-  // Use simple method (same as Parth's original)
-  const basicAqicn = aqicnBasic || {
-    city_aqi: null,
-    stations: [],
-    diagnostics: { method: "basic_aqicn_only" },
-  };
+  // Try to get station-specific AQI first (matches frontend)
+  if (stationName) {
+    console.log(`🎯 Fetching station-specific AQI for: ${stationName}`);
+    stationSpecificAqi = await getStationAQI(stationName);
 
-  aqicn = {
-    source: "aqicn_basic_compatible",
-    city_aqi: basicAqicn.city_aqi,
-    stations: basicAqicn.stations || [],
-    diagnostics: basicAqicn.diagnostics || { method: "basic_fallback" },
-  };
+    if (stationSpecificAqi) {
+      console.log(`✅ Station-specific AQI found: ${stationSpecificAqi.aqi}`);
+      aqicn = {
+        source: "aqicn_station_specific",
+        city_aqi: stationSpecificAqi.aqi, // Use station AQI as city AQI
+        stations: [{
+          name: stationSpecificAqi.station_name,
+          aqi: stationSpecificAqi.aqi,
+          pollutants: stationSpecificAqi.pollutants
+        }],
+        diagnostics: { method: "station_specific_api", endpoint: stationSpecificAqi.api_endpoint }
+      };
+    } else {
+      console.log(`❌ No station-specific AQI found for ${stationName}, falling back to city bounds`);
+    }
+  }
 
-  console.log("🔄 Using simple AQI method for original compatibility");
-  console.log("📊 Basic AQICN city AQI:", aqicn.city_aqi);
+  // Fallback to city bounds method if station-specific failed
+  if (!aqicn) {
+    console.log("🔄 Using city bounds method as fallback");
+    const basicAqicn = aqicnBasic || {
+      city_aqi: null,
+      stations: [],
+      diagnostics: { method: "basic_aqicn_fallback" },
+    };
+
+    aqicn = {
+      source: "aqicn_basic_fallback",
+      city_aqi: basicAqicn.city_aqi,
+      stations: basicAqicn.stations || [],
+      diagnostics: basicAqicn.diagnostics || { method: "basic_fallback" },
+    };
+  }
+
+  console.log("📊 Final AQI source:", aqicn.source);
+  console.log("📊 Final AQI value:", aqicn.city_aqi);
 
   // -------------------------------------------
   // MATCH STATION

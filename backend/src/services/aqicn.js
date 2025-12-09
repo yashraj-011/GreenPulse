@@ -117,3 +117,86 @@ export async function getAQICN() {
     };
   }
 }
+
+// ---------------------------------------------
+// 4) getStationAQI → Station-specific AQI (NEW)
+// Returns specific station AQI using same method as frontend
+// ---------------------------------------------
+export async function getStationAQI(stationName) {
+  try {
+    // Station API mapping (same as frontend)
+    const STATION_API_MAPPING = {
+      "CRRI Mathura Road": "delhi/crri-mathura-road",
+      "Burari Crossing": "delhi/burari",
+      "North Campus DU": "delhi/north-campus",
+      "IGI Airport (T3)": "delhi/igi-airport",
+      "Pusa": "delhi/pusa-imd",
+      "Aya Nagar": "delhi/aya-nagar",
+      "Lodhi Road": "delhi/lodhi-road",
+      "Shadipur": "delhi/shadipur",
+      "IHBAS Dilshad Garden": "delhi/dilshad-garden",
+      "NSIT Dwarka": "delhi/dwarka-sector-8",
+      "ITO": "delhi/ito",
+      "DTU": "delhi/dtu",
+      "Sirifort": "delhi/sirifort",
+      "Mandir Marg": "delhi/mandir-marg",
+      "R K Puram": "delhi/r-k-puram",
+      "Punjabi Bagh": "delhi/punjabi-bagh",
+      "Ashok Vihar": "delhi/ashok-vihar",
+      "Dr. Karni Singh Shooting Range": "delhi/shooting-range",
+      "Dwarka Sector 8": "delhi/dwarka-sector-8",
+      "Jahangirpuri": "delhi/jahangirpuri",
+      "Jawaharlal Nehru Stadium": "delhi/jln-stadium",
+      "Major Dhyan Chand Stadium": "delhi/major-dhyan-chand",
+      "Narela": "delhi/narela",
+      "Najafgarh": "delhi/najafgarh",
+      "Okhla Phase-2": "delhi/okhla",
+      "Nehru Nagar": "delhi/nehru-nagar",
+      "Rohini": "delhi/rohini",
+      "Patparganj": "delhi/patparganj",
+      "Sonia Vihar": "delhi/sonia-vihar",
+      "Wazirpur": "delhi/wazirpur",
+      "Vivek Vihar": "delhi/vivek-vihar",
+      "Bawana": "delhi/bawana",
+      "Mundka": "delhi/mundka",
+      "Sri Aurobindo Marg": "delhi/sri-aurobindo-marg",
+      "Anand Vihar": "delhi/anand-vihar",
+      "Alipur": "delhi/alipur",
+      "Chandni Chowk": "delhi/chandni-chowk",
+      "Lodhi Road (IITM)": "delhi/lodhi-road-iitm"
+    };
+
+    const apiEndpoint = STATION_API_MAPPING[stationName];
+
+    if (!apiEndpoint) {
+      console.warn(`❌ No API mapping found for station: ${stationName}`);
+      return null;
+    }
+
+    const url = `https://api.waqi.info/feed/${apiEndpoint}/?token=${AQICN_TOKEN}`;
+    const resp = await axios.get(url, { timeout: 6000 });
+
+    if (!resp.data || resp.data.status !== "ok") {
+      console.warn(`❌ AQICN station API failed for ${stationName}`);
+      return null;
+    }
+
+    const aqi = resp.data.data.aqi;
+    const pollutants = resp.data.data.iaqi || {};
+
+    console.log(`✅ Station-specific AQI for ${stationName}: ${aqi}`);
+
+    return {
+      station_name: stationName,
+      api_endpoint: apiEndpoint,
+      aqi: Number(aqi),
+      pollutants: pollutants,
+      source: "AQICN Station-Specific",
+      timestamp: new Date().toISOString()
+    };
+
+  } catch (err) {
+    console.error(`getStationAQI error for ${stationName}:`, err.message);
+    return null;
+  }
+}
