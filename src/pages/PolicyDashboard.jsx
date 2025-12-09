@@ -182,14 +182,6 @@ export default function PolicyDashboard() {
     return <Icon className="w-5 h-5" />;
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 dark:from-slate-900 dark:to-slate-800 py-8 px-4">
@@ -357,25 +349,6 @@ export default function PolicyDashboard() {
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(intervention.status)}`}>
                     {intervention.status.toUpperCase()}
                   </span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                  <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Investment</p>
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{formatCurrency(intervention.cost)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">AQI Reduction</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
-                        {intervention.actualReduction}% / {intervention.targetReduction}%
-                      </p>
-                      {intervention.actualReduction >= intervention.targetReduction ? (
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <Clock className="w-4 h-4 text-yellow-500" />
-                      )}
-                    </div>
-                  </div>
                 </div>
                 <div className="mb-3 mt-4">
                   <div className="flex justify-between text-sm text-slate-600 dark:text-slate-300 mb-1">
