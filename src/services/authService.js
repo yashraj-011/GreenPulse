@@ -5,7 +5,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
-  getIdToken,
   signOut,
 } from "firebase/auth";
 
@@ -31,48 +30,30 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-const BACKEND = import.meta.env.VITE_API_BASE || "";
-
-async function exchangeFirebaseToken(idToken, role) {
-  console.log("🔥 Sending token to backend:", BACKEND);
-  const res = await fetch(`${BACKEND}/api/auth/firebase-login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken, role }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    console.error("🔥 Backend login failed:", res.status, text);
-    // try to parse JSON error if available
-    try {
-      const json = await res.json();
-      throw new Error(json?.message || json?.detail || `Backend error ${res.status}`);
-    } catch {
-      throw new Error(text || `Backend error ${res.status}`);
-    }
-  }
-
-  return res.json(); // expects { token, user }
-}
-
 export const authService = {
   /**
    * Signup flow:
    * - create Firebase account
    * - set displayName
-   * - exchange idToken with backend
-   * - fallback: if email already exists, try sign-in with same password (dev-friendly)
+   * - create local user object with role (no backend required)
    */
   signup: async ({ name, email, password, role = "user" }) => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       if (name) await updateProfile(cred.user, { displayName: name });
 
-      const idToken = await getIdToken(cred.user, true);
-      const payload = await exchangeFirebaseToken(idToken, role);
+      // Create user object with role (local-only, no backend)
+      const user = {
+        name: name || cred.user.displayName || email.split('@')[0],
+        email: cred.user.email,
+        role: role,
+        uid: cred.user.uid
+      };
 
-      if (payload?.token) localStorage.setItem("backend_token", payload.token);
+      const payload = { user, token: `local_token_${Date.now()}` };
+      localStorage.setItem("backend_token", payload.token);
+
+      console.log("✅ Created user:", user);
       return payload;
     } catch (err) {
       // dev-friendly fallback: if email already exists, try sign-in
@@ -82,9 +63,19 @@ export const authService = {
         console.warn("⚠️ signup: email already in use — attempting sign-in fallback");
         try {
           const signInCred = await signInWithEmailAndPassword(auth, email, password);
-          const idToken = await getIdToken(signInCred.user, true);
-          const payload = await exchangeFirebaseToken(idToken, role);
-          if (payload?.token) localStorage.setItem("backend_token", payload.token);
+
+          // Create user object with role for existing user
+          const user = {
+            name: name || signInCred.user.displayName || email.split('@')[0],
+            email: signInCred.user.email,
+            role: role,
+            uid: signInCred.user.uid
+          };
+
+          const payload = { user, token: `local_token_${Date.now()}` };
+          localStorage.setItem("backend_token", payload.token);
+
+          console.log("✅ Signed in existing user:", user);
           return payload;
         } catch (signInErr) {
           console.error("🔥 signup fallback signIn failed:", signInErr);
@@ -100,15 +91,24 @@ export const authService = {
   /**
    * Login flow:
    * - sign in to Firebase
-   * - exchange idToken with backend
+   * - create local user object with role (no backend required)
    */
   login: async (email, password, role = "user") => {
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      const idToken = await getIdToken(cred.user, true);
 
-      const payload = await exchangeFirebaseToken(idToken, role);
-      if (payload?.token) localStorage.setItem("backend_token", payload.token);
+      // Create user object with role (local-only, no backend)
+      const user = {
+        name: cred.user.displayName || email.split('@')[0],
+        email: cred.user.email,
+        role: role,
+        uid: cred.user.uid
+      };
+
+      const payload = { user, token: `local_token_${Date.now()}` };
+      localStorage.setItem("backend_token", payload.token);
+
+      console.log("✅ Logged in user:", user);
       return payload;
     } catch (err) {
       console.error("🔥 FIREBASE LOGIN ERROR:", err);
