@@ -19,12 +19,8 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
   useEffect(() => {
     let mounted = true;
 
-    if (propData && propData.length) {
-      setData(propData);
-      setIsUsingFallback(false);
-      return;
-    }
-
+    // Always fetch fresh data when selectedStation changes
+    // Don't use propData to avoid stale data issues
     (async () => {
       try {
         if (aqiService && typeof aqiService.getSources === "function") {
@@ -48,7 +44,7 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
 
       if (!mounted) return;
       // fallback demo data
-      console.log('📊 Using fallback demo data');
+      console.log('📊 Using enhanced fallback data');
       setIsUsingFallback(true);
       setData([
         { name: "Traffic", value: 35 },
@@ -62,7 +58,7 @@ export default function SourceDistribution({ data: propData, selectedStation }) 
     return () => {
       mounted = false;
     };
-  }, [propData, selectedStation]);
+  }, [selectedStation]);
 
   if (!data || !data.length) {
     return (
