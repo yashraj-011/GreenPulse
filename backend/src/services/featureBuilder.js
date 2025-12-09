@@ -43,30 +43,54 @@ async function getCachedAQICNDetailed(opts = {}) {
 // Improved Fuzzy Station Matching
 // -------------------------------------------
 function pickStationFromAQICN(aqicn, stationName, referenceLat = null, referenceLon = null) {
-  if (!aqicn || !Array.isArray(aqicn.stations)) return null;
+  if (!aqicn || !Array.isArray(aqicn.stations)) {
+    console.log("⚠️ No AQICN stations available, using requested station name:", stationName);
+    return null;
+  }
 
   const target = stationName.toLowerCase().replace(/delhi|india|,/g, "").trim();
+  console.log("🔍 Looking for AQICN station matching:", target, "(from:", stationName + ")");
+  console.log("📊 Available AQICN stations:", aqicn.stations.map(s => s.name).slice(0, 5).join(", "), "...");
 
-  let best = null;
+  let exactMatch = null;
+  let bestFuzzy = null;
   let bestScore = 0;
 
   for (const st of aqicn.stations) {
     const raw = (st.name || "").toLowerCase();
     const clean = raw.replace(/delhi|india|,/g, "").trim();
 
+    // Try exact match first
+    if (clean === target) {
+      console.log("✅ EXACT AQICN match found:", st.name);
+      exactMatch = st;
+      break;
+    }
+
+    // Fuzzy matching as fallback
     if (clean.includes(target) || target.includes(clean) || raw.includes(target)) {
       const score = clean.length;
       if (score > bestScore) {
-        best = st;
+        bestFuzzy = st;
         bestScore = score;
       }
     }
   }
 
-  if (best) return best;
+  const result = exactMatch || bestFuzzy;
+
+  if (result) {
+    console.log("🎯 AQICN Station Selected:", result.name, "AQI:", result.aqi);
+    return result;
+  }
+
+  console.log("❌ No fuzzy match found, trying nearest station...");
 
   // Fallback → Nearest station
-  if (!referenceLat || !referenceLon) return null;
+  if (!referenceLat || !referenceLon) {
+    console.log("❌ No reference coordinates for nearest station fallback");
+    return null;
+  }
 
   const dist = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -91,6 +115,12 @@ function pickStationFromAQICN(aqicn, stationName, referenceLat = null, reference
       minDist = d;
       nearest = st;
     }
+  }
+
+  if (nearest) {
+    console.log("📍 Using nearest AQICN station:", nearest.name, `(${minDist.toFixed(1)}km away)`);
+  } else {
+    console.log("❌ No nearest station found");
   }
 
   return nearest;
@@ -213,6 +243,11 @@ export async function buildFeatureVector(stationName = null) {
     fire_count: fires.fire_count ?? 0,
     station_name: stationInfo?.name || stationName || null,
   };
+
+  console.log("📊 Final station resolution:");
+  console.log("  - Requested station:", stationName);
+  console.log("  - AQICN matched station:", stationInfo?.name || "None");
+  console.log("  - Final station_name in rt:", rt.station_name);
 
   const modelInput = {};
 
