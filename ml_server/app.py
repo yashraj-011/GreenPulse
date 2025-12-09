@@ -48,6 +48,7 @@ OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 # Pydantic models
 class StationForecastRequest(BaseModel):
     station_name: str
+    current_aqi: Optional[float] = None
 
 class SourceAttributionRequest(BaseModel):
     station_name: str
@@ -113,44 +114,96 @@ class AQIPredictor:
         self.is_trained = True
         logger.info("ML model initialized with synthetic data")
 
-    def predict_forecast(self, station_name: str, hours: List[int] = [6, 12, 24, 48, 72]) -> Dict[str, float]:
-        """Predict AQI for multiple future time points"""
+    def predict_forecast(self, station_name: str, current_aqi: Optional[float] = None, hours: List[int] = [6, 12, 24, 48, 72]) -> Dict[str, float]:
+        """Predict AQI for multiple future time points with realistic Delhi patterns"""
         if not self.is_trained:
             raise ValueError("Model not trained")
 
-        current_aqi = self._get_current_aqi(station_name)
-        current_weather = self._get_weather_data(station_name)
+        # Use provided current AQI or fallback to realistic baseline
+        if current_aqi is not None and current_aqi > 0:
+            base_aqi = current_aqi
+        else:
+            base_aqi = self._get_current_aqi(station_name)
 
+        current_weather = self._get_weather_data(station_name)
         forecasts = {}
 
+        # Delhi-specific patterns
+        month = datetime.now().month
+        hour = datetime.now().hour
+
+        # Seasonal factors for Delhi
+        if month in [11, 12, 1, 2]:  # Winter - high pollution
+            seasonal_factor = 1.2  # 20% worse in winter
+            min_degradation = 0.95  # Very slow improvement
+        elif month in [10, 3]:  # Transition months
+            seasonal_factor = 1.1
+            min_degradation = 0.90
+        else:  # Summer/Monsoon - better conditions
+            seasonal_factor = 0.8
+            min_degradation = 0.85
+
         for h in hours:
-            # Create features for prediction
-            future_time = datetime.now() + timedelta(hours=h)
-            features = np.array([[
-                future_time.hour,
-                future_time.timetuple().tm_yday,
-                current_weather.get('temperature', 25),
-                current_weather.get('humidity', 60),
-                current_weather.get('wind_speed', 5),
-                current_aqi
-            ]])
+            # Realistic pollution degradation/improvement
+            # Delhi AQI typically doesn't change drastically hour to hour
 
-            features_scaled = self.scaler.transform(features)
-            prediction = self.model.predict(features_scaled)[0]
+            # Time-based factors
+            future_hour = (hour + h) % 24
+            if future_hour in [7, 8, 9, 18, 19, 20]:  # Rush hours
+                time_factor = 1.1
+            elif future_hour in [2, 3, 4, 5]:  # Early morning
+                time_factor = 0.95
+            else:
+                time_factor = 1.0
 
-            # Add some realistic variability
-            prediction += np.random.normal(0, 10)
-            prediction = max(10, min(500, prediction))  # Clamp to realistic range
+            # Wind dispersion effect
+            wind_speed = current_weather.get('wind_speed', 5)
+            if wind_speed > 10:
+                wind_factor = 0.9  # Good wind helps
+            elif wind_speed < 3:
+                wind_factor = 1.1  # Stagnant air makes it worse
+            else:
+                wind_factor = 1.0
 
-            forecasts[f"{h}h"] = round(prediction, 1)
+            # Calculate forecast with realistic constraints
+            # Short-term forecasts (6-12h) should be very close to current
+            if h <= 12:
+                # Very conservative change for short-term
+                degradation = np.random.uniform(0.95, 1.05)  # ±5% max change
+                prediction = base_aqi * degradation * time_factor * wind_factor
+            else:
+                # Longer term can have more variation but still realistic
+                degradation = np.random.uniform(min_degradation, 1.15)
+                prediction = base_aqi * degradation * seasonal_factor * time_factor * wind_factor
+
+            # Add some realistic variability (much smaller than before)
+            if h <= 24:
+                noise = np.random.normal(0, max(5, base_aqi * 0.05))  # 5% noise max
+            else:
+                noise = np.random.normal(0, max(10, base_aqi * 0.1))  # 10% noise max
+
+            prediction += noise
+
+            # Delhi-appropriate bounds
+            prediction = max(30, min(500, prediction))  # Never go below 30 (impossible in Delhi winter)
+
+            forecasts[f"{h}h"] = round(prediction, 0)  # Round to integers like real AQI
 
         return forecasts
 
     def _get_current_aqi(self, station_name: str) -> float:
-        """Get current AQI for station (mock implementation)"""
-        # In real implementation, this would fetch from AQICN API
-        base_aqi = 150 + np.random.normal(0, 50)
-        return max(10, min(500, base_aqi))
+        """Get current AQI for station - will be overridden with real data"""
+        # This is a fallback - real implementation gets from AQICN API
+        # For Delhi winter, use realistic baseline
+        month = datetime.now().month
+        if month in [11, 12, 1, 2]:  # Winter months
+            base_aqi = 250 + np.random.normal(0, 30)  # Higher winter baseline
+        elif month in [10, 3]:  # Transition months
+            base_aqi = 180 + np.random.normal(0, 40)
+        else:  # Summer/monsoon
+            base_aqi = 120 + np.random.normal(0, 30)
+
+        return max(50, min(450, base_aqi))
 
     def _get_weather_data(self, station_name: str) -> Dict[str, float]:
         """Get current weather data (mock implementation)"""
@@ -744,8 +797,11 @@ async def forecast_station(request: StationForecastRequest):
     try:
         logger.info(f"Forecasting for station: {request.station_name}")
 
-        # Get forecasts
-        forecasts = aqi_predictor.predict_forecast(request.station_name)
+        # Get current AQI - prefer provided value, fallback to estimation
+        current_aqi = request.current_aqi or aqi_predictor._get_current_aqi(request.station_name)
+
+        # Get forecasts with realistic current AQI
+        forecasts = aqi_predictor.predict_forecast(request.station_name, current_aqi)
 
         # Mock confidence intervals (in real implementation, use ensemble methods)
         confidence_intervals = {}
@@ -756,8 +812,7 @@ async def forecast_station(request: StationForecastRequest):
                 "upper": round(value + uncertainty, 1)
             }
 
-        # Mock realtime data
-        current_aqi = aqi_predictor._get_current_aqi(request.station_name)
+        # Mock realtime data - use the current AQI we already have
         current_weather = aqi_predictor._get_weather_data(request.station_name)
 
         return ForecastResponse(

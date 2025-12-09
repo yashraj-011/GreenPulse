@@ -5,7 +5,6 @@ import AQICard from "../components/AQICard";
 import ForecastChart from "../components/ForecastChart";
 import SourceDistribution from "../components/SourceDistribution";
 import DelhiAQIMap from "../components/DelhiAQIMap";
-import SatelliteDataPanel from "../components/SatelliteDataPanel";
 
 const DEFAULT_RANGE = "72";
 
@@ -266,10 +265,6 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Satellite Data Panel */}
-        <div className="mt-6">
-          <SatelliteDataPanel />
-        </div>
       </div>
     </div>
   );
