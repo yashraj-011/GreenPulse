@@ -9,6 +9,7 @@ import Signup from './pages/auth/Signup';
 import Dashboard from './pages/Dashboard';
 import SafeRoutes from './pages/SafeRoutes';
 import Community from './pages/Community';
+import PolicyDashboard from './pages/PolicyDashboard';
 import Profile from "./components/Profile";
 
 
@@ -84,6 +85,16 @@ function App() {
             <ProtectedRoute>
               <AppLayout>
                 <Community />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/policy"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <PolicyDashboard />
               </AppLayout>
             </ProtectedRoute>
           }

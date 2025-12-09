@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+const ML_API_BASE = import.meta.env.VITE_ML_API_BASE || 'http://localhost:8000';
 
 // AQICN API mapping for Delhi stations
 const STATION_API_MAPPING = {
@@ -132,9 +133,39 @@ export const aqiService = {
         throw new Error('Station not found');
       }
 
-      console.log("📍 Fetching forecast for station:", station.name);
+      console.log("📍 Fetching ML forecast for station:", station.name);
 
-      // Call real forecast API
+      // Try ML API first
+      try {
+        const mlResponse = await axios.post(`${ML_API_BASE}/forecast/station`, {
+          station_name: station.name
+        }, {
+          timeout: 10000 // 10 second timeout
+        });
+
+        if (mlResponse.data && mlResponse.data.success) {
+          const { forecast, realtime } = mlResponse.data;
+
+          console.log("✅ ML Forecast successful:", mlResponse.data);
+
+          // Convert ML API response to expected format
+          const result = [
+            { hour: 'Now', aqi: Math.round(realtime?.aqi || forecast['24h']) },
+            { hour: '+6h', aqi: Math.round(forecast['6h'] || forecast['24h'] * 0.95) },
+            { hour: '+12h', aqi: Math.round(forecast['12h'] || forecast['24h'] * 0.9) },
+            { hour: '+24h', aqi: Math.round(forecast['24h']) },
+            { hour: '+48h', aqi: Math.round(forecast['48h']) },
+            { hour: '+72h', aqi: Math.round(forecast['72h']) }
+          ];
+
+          console.log("🤖 Using ML-powered forecast data:", result);
+          return result;
+        }
+      } catch (mlError) {
+        console.warn("❌ ML API unavailable, falling back to backend:", mlError.message);
+      }
+
+      // Fallback to original backend API
       const response = await axios.post(`${API_BASE}/api/forecast/station`, {
         station_name: station.name
       });
@@ -159,13 +190,13 @@ export const aqiService = {
           { hour: '+72h', aqi: Math.round(forecast['72h']) }
         ];
 
-        console.log("✅ Converted forecast data:", result);
+        console.log("✅ Using backend forecast data:", result);
         return result;
       }
 
       throw new Error('Invalid forecast response');
     } catch (error) {
-      console.warn('❌ Failed to fetch forecast from backend:', error.message);
+      console.warn('❌ All forecast services failed:', error.message);
       console.log("🔄 Using fallback mock data");
 
       // Fallback mock data
@@ -182,8 +213,33 @@ export const aqiService = {
 
   getSources: async (stationName) => {
     try {
+      console.log(`🔍 Fetching pollution sources for: ${stationName}`);
+
+      // Try ML API first for real-time source attribution
+      try {
+        const mlResponse = await axios.post(`${ML_API_BASE}/sources/station`, {
+          station_name: stationName
+        }, {
+          timeout: 8000 // 8 second timeout
+        });
+
+        if (mlResponse.data && mlResponse.data.success && mlResponse.data.sources) {
+          const sources = mlResponse.data.sources;
+
+          const result = Object.entries(sources).map(([name, value]) => ({
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            value: Math.round(parseFloat(value) || 0)
+          }));
+
+          console.log(`🤖 Using ML-powered source attribution for ${stationName}:`, result);
+          return result;
+        }
+      } catch (mlError) {
+        console.warn(`❌ ML source attribution unavailable for ${stationName}, using backend:`, mlError.message);
+      }
+
+      // Fallback to backend API
       if (stationName) {
-        // Try to get sources from real backend
         const response = await axios.post(`${API_BASE}/api/forecast/station`, {
           station_name: stationName
         });
@@ -191,25 +247,56 @@ export const aqiService = {
         if (response.data && response.data.success && response.data.sources) {
           // Convert backend sources to expected format
           const sources = response.data.sources;
-          return Object.entries(sources).map(([name, value]) => ({
+          const result = Object.entries(sources).map(([name, value]) => ({
             name: name.charAt(0).toUpperCase() + name.slice(1),
             value: Math.round(parseFloat(value) || 0)
           }));
+
+          console.log(`✅ Using backend source data for ${stationName}:`, result);
+          return result;
         }
       }
 
-      // Fallback demo data
-      return [
-        { name: "Traffic", value: 35 },
-        { name: "Stubble", value: 25 },
-        { name: "Industry", value: 20 },
-        { name: "Dust", value: 15 },
-        { name: "Others", value: 5 }
-      ];
-    } catch (error) {
-      console.warn('Failed to fetch sources from backend:', error.message);
+      console.log(`📊 Using fallback demo data for ${stationName}`);
 
-      // Fallback data
+      // Enhanced fallback demo data with time-based variation
+      const hour = new Date().getHours();
+      let baseData;
+
+      if (hour >= 7 && hour <= 10 || hour >= 17 && hour <= 20) {
+        // Rush hours - more traffic
+        baseData = [
+          { name: "Traffic", value: 45 },
+          { name: "Industry", value: 20 },
+          { name: "Construction", value: 15 },
+          { name: "Stubble", value: 15 },
+          { name: "Others", value: 5 }
+        ];
+      } else if (hour >= 22 || hour <= 6) {
+        // Night - more stubble burning
+        baseData = [
+          { name: "Stubble", value: 40 },
+          { name: "Traffic", value: 20 },
+          { name: "Industry", value: 25 },
+          { name: "Construction", value: 10 },
+          { name: "Others", value: 5 }
+        ];
+      } else {
+        // Regular hours
+        baseData = [
+          { name: "Traffic", value: 35 },
+          { name: "Stubble", value: 25 },
+          { name: "Industry", value: 20 },
+          { name: "Dust", value: 15 },
+          { name: "Others", value: 5 }
+        ];
+      }
+
+      return baseData;
+    } catch (error) {
+      console.warn('Failed to fetch sources:', error.message);
+
+      // Final fallback data
       return [
         { name: "Traffic", value: 35 },
         { name: "Stubble", value: 25 },

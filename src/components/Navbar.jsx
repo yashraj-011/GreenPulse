@@ -6,7 +6,8 @@ import {
   Home,
   Route,
   MessageCircle,
-  User
+  User,
+  BarChart3
 } from 'lucide-react';
 import DarkModeToggle from './DarkModeToggle';
 
@@ -18,6 +19,7 @@ const Navbar = ({ user, onLogout }) => {
     { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: Home },
     { id: 'safe-routes', label: 'Safe Routes', path: '/safe-routes', icon: Route },
     { id: 'community', label: 'Community', path: '/community', icon: MessageCircle },
+    { id: 'policy', label: 'Policy', path: '/policy', icon: BarChart3 },
     { id: 'profile', label: 'Profile', path: '/profile', icon: User }
   ];
 
