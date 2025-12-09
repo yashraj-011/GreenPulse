@@ -47,6 +47,8 @@ export default function SatelliteDataPanel() {
       setAnalysis(analysisData);
 
       console.log('✅ Satellite data loaded successfully');
+      console.log('🔍 Analysis data structure:', analysisData);
+      console.log('🔍 Fire contribution value:', analysisData?.analysis?.fire_contribution);
     } catch (err) {
       console.error('❌ Failed to load satellite data:', err);
       setError('Failed to load satellite data');
